@@ -1,0 +1,109 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 05600dbba3070d36dc637f2ad52534db758f3ac7bc05011cee5f888923a0e893
+
+name:           short-vec
+version:        0.1.0.0
+synopsis:       A length-indexed vector type build on 'SmallArray#'
+description:    This provides performant length-indexed vectors with a suite of rewrite rules
+                implementing fusion of intermediate structures, so that expressions involving
+                many operations can usually be compiled to a single pass of computing and
+                writing each index of the final 'Vec'.
+category:       Data
+homepage:       https://github.com/google/hs-fin-vec#readme
+bug-reports:    https://github.com/google/hs-fin-vec/issues
+author:         Lennart Augustsson <lennart@augustsson.net>, Wren Romano, Andrew Pritchard <awpr@google.com>
+
+maintainer:     Lennart Augustsson <lennart@augustsson.net>, Wren Romano <wrengr@google.com>, Andrew Pritchard <awpr@google.com>
+
+copyright:      2018-2021 Google LLC
+license:        Apache-2.0
+build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/google/hs-fin-vec
+  subdir: short-vec
+
+library
+  exposed-modules:
+      Data.Vec
+      Data.Vec.Internal
+      Data.Vec.Lens
+  other-modules:
+      Paths_short_vec
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Werror
+  build-depends:
+      QuickCheck
+    , adjunctions
+    , base
+    , data-default
+    , deepseq
+    , distributive
+    , fin-int
+    , integer-gmp
+    , lens
+    , numeric-kinds
+    , semigroupoids
+    , snumber
+    , vector
+  default-language: Haskell2010
+
+test-suite Vec-test
+  type: exitcode-stdio-1.0
+  main-is: Tests.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Werror
+  build-depends:
+      HUnit
+    , QuickCheck >=2.4.0.1
+    , adjunctions
+    , base
+    , data-default
+    , deepseq
+    , distributive
+    , fin-int
+    , integer-gmp
+    , lens
+    , numeric-kinds
+    , semigroupoids
+    , short-vec
+    , snumber
+    , test-framework >=0.3.3
+    , test-framework-hunit
+    , test-framework-quickcheck2
+    , vector
+  default-language: Haskell2010
+
+benchmark Vec-benchmark
+  type: exitcode-stdio-1.0
+  main-is: Benchmark.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Werror
+  build-depends:
+      QuickCheck
+    , adjunctions
+    , base
+    , data-default
+    , deepseq
+    , distributive
+    , fin-int
+    , gauge
+    , integer-gmp
+    , lens
+    , numeric-kinds
+    , semigroupoids
+    , short-vec
+    , snumber
+    , vector
+  default-language: Haskell2010

@@ -1,0 +1,87 @@
+# Copyright 2018-2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: short-vec
+version: 0.1.0.0
+category: Data
+synopsis: A length-indexed vector type build on 'SmallArray#'
+description: |
+  This provides performant length-indexed vectors with a suite of rewrite rules
+  implementing fusion of intermediate structures, so that expressions involving
+  many operations can usually be compiled to a single pass of computing and
+  writing each index of the final 'Vec'.
+license: Apache-2.0
+author: >
+  Lennart Augustsson <lennart@augustsson.net>,
+  Wren Romano,
+  Andrew Pritchard <awpr@google.com>
+copyright: 2018-2021 Google LLC
+maintainer: >
+  Lennart Augustsson <lennart@augustsson.net>,
+  Wren Romano <wrengr@google.com>,
+  Andrew Pritchard <awpr@google.com>
+github: google/hs-fin-vec/short-vec
+
+# Note: this causes CHANGELOG.md to be included in Hackage distributions.
+extra-source-files:
+  CHANGELOG.md
+
+ghc-options: -Wall -Werror
+
+dependencies:
+  - adjunctions
+  - base
+  - data-default
+  - deepseq
+  - distributive
+  - integer-gmp
+  - lens
+  - fin-int
+  - semigroupoids
+  - snumber
+  - numeric-kinds
+  - QuickCheck
+  - vector
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Data.Vec
+    - Data.Vec.Internal
+    - Data.Vec.Lens
+
+tests:
+  Vec-test:
+    source-dirs: test
+    main: Tests.hs
+    other-modules: []  # Or else Hpack will pick up Benchmark.hs
+    dependencies:
+      - HUnit
+      - QuickCheck >= 2.4.0.1
+      - base
+      - short-vec
+      - test-framework >= 0.3.3
+      - test-framework-quickcheck2
+      - test-framework-hunit
+
+benchmarks:
+  Vec-benchmark:
+    source-dirs: test
+    main: Benchmark.hs
+    other-modules: []
+    dependencies:
+      - short-vec
+      - fin-int
+      - gauge
+      - deepseq

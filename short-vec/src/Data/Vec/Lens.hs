@@ -1,0 +1,221 @@
+-- Copyright 2018-2021 Google LLC
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--      http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+-- Work around <https://ghc.haskell.org/trac/ghc/ticket/14511>
+{-# OPTIONS_GHC -fno-float-in #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+module Data.Vec.Lens
+    (
+    -- ** List-based lenses
+      list
+    -- ** Arity-based lenses
+    , paired
+
+    -- * List-like operators
+    -- ** Constructor views
+    -- *** The cons view
+    , consed
+    -- *** The snoc view
+    , snoced
+    -- ** Operator views
+    -- *** The append view
+    , chopped
+    -- *** The concat view
+    , subVecs
+    -- *** The reverse view
+    , reversed
+    -- *** The transposition view
+    , vtransposed
+
+    -- * Misc lenses
+    , midElem, ixElem, ix
+    , sliced
+    , rotated
+    , vdiagonal
+    ) where
+
+import Prelude hiding ((++), concat, concatMap, iterate)
+import Control.Lens (FoldableWithIndex(..), FunctorWithIndex(..), Iso, Lens',
+    TraversableWithIndex(..), iso, lens, from, swapped)
+import qualified Data.Foldable as F
+import Data.Functor.Rep (ifoldMapRep, itraverseRep)
+import Data.SNumber (snumberVal)
+import GHC.ST (runST)
+import GHC.TypeLits(KnownNat, type (+), type (<=), type (-))
+import qualified GHC.TypeLits
+import Numeric.Fin
+
+import Data.Vec.Internal
+
+--------------------------------------------------------------------------------
+
+-- | A list (of the right length) is isomorphic to a vector.
+-- The list-to-vector direction is partial.
+list :: (KnownNat n) => Iso (Vec n a) (Vec n b)
+                            [a]       [b]
+list = iso F.toList fromList
+
+--------------------------------------------------------------------------------
+
+-- | Lens on a single element.
+ix :: Fin n -> Lens' (Vec n a) a
+ix i = i `seq` lens (!i) (upd i)
+{-# INLINE ix #-}
+
+----------------
+
+-- | An isomorphism with an element added at the beginning of a vector.
+consed :: Iso (a, Vec n a)    (b, Vec m b)
+              (Vec (n + 1) a) (Vec (m + 1) b)
+consed = from (unsafeIxElem (const 0))
+
+-- | An isomorphism with an element added at the end of a vector.
+snoced :: Iso (Vec n a, a)    (Vec m b, b)
+              (Vec (n + 1) a) (Vec (m + 1) b)
+snoced = from (unsafeIxElem id . swapped)
+
+-- | Isomorphism between a vector with and without its middle element.
+midElem :: forall m n a b. Iso (Vec (n+1) a) (Vec (m+1) b)
+                               (a, Vec n a)  (b, Vec m b)
+midElem = unsafeIxElem (`quot` 2)
+
+----------------
+
+-- | An isomorphism with a 'split' vector.
+chopped :: (KnownNat m) => Iso (Vec (m + n) a)    (Vec (o + p) b)
+                               (Vec m a, Vec n a) (Vec o b, Vec p b)
+chopped = iso (split snumberVal) (uncurry (++))
+
+-- TODO: Only one of the KnownNats needed.
+-- | A vector can be split (isomorphically) into a vector of vectors.
+subVecs :: (KnownNat m, KnownNat n, (n GHC.TypeLits.* m) ~ nm, (p GHC.TypeLits.* o) ~ po)
+        => Iso (Vec nm a)        (Vec po b)
+               (Vec n (Vec m a)) (Vec p (Vec o b))
+subVecs = iso reshape concat
+
+-- | A vector is isomorphic to its reversal.
+reversed :: Iso (Vec n a) (Vec m b)
+                (Vec n a) (Vec m b)
+reversed = iso rev rev
+
+--------------------------------
+-- Other misc lenses
+
+-- Unsafe version of ixElem, but with a function computing the
+-- index from @valueOf @n@.
+-- This allows unsafeIxElem to be used easily for midElem and snoced.
+unsafeIxElem :: (Int -> Int) -> Iso (Vec (n+1) a) (Vec (m+1) b)
+                                    (a, Vec n a)  (b, Vec m b)
+unsafeIxElem fi = iso getf setf
+  where getf xs =
+          let !i = fi (vSize xs - 1)
+          in  unsafeIndexK xs i $ \ xi ->
+                let !xs' = unsafeRemove i xs
+                in  (xi, xs')
+        setf (xi, xs) =
+          let !i = fi (vSize xs)
+          in  unsafeInsert i xi xs
+{-# INLINE unsafeIxElem #-}
+
+-- | Isomorphism between a vector with and without a single element at
+-- the given index.
+ixElem :: forall n a b. Fin (n+1) -> Iso (Vec (n+1) a) (Vec (n+1) b)
+                                         (a, Vec n a)  (b, Vec n b)
+ixElem i = unsafeIxElem (const (finToInt i))
+
+
+-- | A lens to a slice of the vector.
+sliced
+    :: forall m n a
+    .  (KnownNat m, KnownNat n, m <= n)
+    => Fin (n - m + 1)
+    -> Lens' (Vec n a) (Vec m a)
+sliced (finToInt -> !start) = lens getf setf
+    where
+    !m    = nat2int @m
+    !n    = nat2int @n
+    !end  = start + m
+    !rest = n - end -- the length of the post-slice portion of the vector
+
+    getf xs    = unsafeSliceVec xs start m
+    setf xs ys =
+        createVec snumberVal $ \mv -> do
+            unsafeCopyVec xs 0   mv 0     start
+            unsafeCopyVec ys 0   mv start m
+            unsafeCopyVec xs end mv end   rest
+
+
+-- | A two-element vector is isomorphic to a pair.
+paired :: Iso (Vec 2 a) (Vec 2 b) (a, a) (b, b)
+paired = iso unvec2 (uncurry vec2)
+    where
+    unvec2 v = indexK v 0 $ \x -> indexK v 1 $ \y -> (x,y)
+
+-- | Isomorphism between a vector and a vector rotated @i@ steps.
+-- The element at index 0 in the first vector is at index @i@ in the second.
+-- E.g., @view (rotated 1) (fromList "ABCD") == fromList "DABC"@
+rotated :: forall n a b. Fin n -> Iso (Vec n a) (Vec n b) (Vec n a) (Vec n b)
+rotated i = iso (rot i) (\v -> rot (withSize v (complementFin i)) v)
+{-# INLINE rotated #-}
+
+-- | Isomorphism of transposed vectors.
+vtransposed :: (KnownNat m, KnownNat p)
+            => Iso (Vec n (Vec m a)) (Vec p (Vec o b))
+                   (Vec m (Vec n a)) (Vec o (Vec p b))
+vtransposed = iso vtranspose vtranspose
+
+-- TODO: KnownNat not needed.
+-- | Lens on the main diagonal.
+vdiagonal :: forall n a. KnownNat n => Lens' (Vec n (Vec n a)) (Vec n a)
+vdiagonal = lens getf setf
+    where
+    getf :: Vec n (Vec n a) -> Vec n a
+    getf = mapWithPos (flip (!))
+
+    setf :: Vec n (Vec n a) -> Vec n a -> Vec n (Vec n a)
+    setf m d =
+        mkVec snumberVal $ \i ->
+            indexK m i $ \mi ->
+            indexK d i $ \di ->
+            runST $ do
+                mi' <- safeThawMV mi
+                writeMV mi' i di
+                unsafeFreezeMV mi'
+
+instance FunctorWithIndex (Fin n) (Vec n) where imap = mapWithPos
+-- TODO: Implement via more efficient built-in functions.
+instance KnownNat n => FoldableWithIndex (Fin n) (Vec n)
+  where ifoldMap = ifoldMapRep
+instance KnownNat n => TraversableWithIndex (Fin n) (Vec n)
+  where itraverse = itraverseRep
