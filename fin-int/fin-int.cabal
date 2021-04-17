@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: de12d4eb10ef3130a1653aa41a279729e41fd0d9df1cc454a0672fff7f3e378c
+-- hash: 3b167a8ec80488929bbfa75b0e3378548c6fb1c093aca5a9ba55f6c119db23bb
 
 name:           fin-int
 version:        0.1.0.0
@@ -39,9 +39,9 @@ library
       src
   ghc-options: -Wall -Werror
   build-depends:
-      QuickCheck
-    , attenuation
-    , base
-    , data-default
-    , deepseq
+      QuickCheck >=2.5 && <2.15
+    , attenuation >=0.1 && <0.2
+    , base >=4.12 && <4.16
+    , data-default-class >=0.0 && <0.2
+    , deepseq >=1.1 && <1.5
   default-language: Haskell2010

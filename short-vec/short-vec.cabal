@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4300274b4cb064156b057c314d4c280459d7e2f49a0a2a4bbfaaba34e269ee71
+-- hash: b29bdae8846cd81ff6d58ac479eab314861d83aa271f8cde9a53e2df84519e6b
 
 name:           short-vec
 version:        0.1.0.0
@@ -42,19 +42,18 @@ library
       src
   ghc-options: -Wall -Werror
   build-depends:
-      QuickCheck
-    , adjunctions
-    , base
-    , data-default
-    , deepseq
-    , distributive
-    , fin-int
-    , integer-gmp
+      QuickCheck >=2.5 && <2.15
+    , adjunctions >=4.4 && <4.5
+    , base >=4.12 && <4.16
+    , data-default-class >=0.0 && <0.2
+    , deepseq >=1.1 && <1.5
+    , distributive >=0.1 && <0.7
+    , fin-int >=0.1 && <0.2
+    , integer-gmp >=0.5 && <1.1
     , lens
-    , numeric-kinds
-    , semigroupoids
-    , snumber
-    , vector
+    , numeric-kinds >=0.1 && <0.2
+    , semigroupoids >=1.0 && <5.4
+    , snumber >=0.1 && <0.2
   default-language: Haskell2010
 
 test-suite Vec-test
@@ -66,22 +65,21 @@ test-suite Vec-test
   build-depends:
       HUnit
     , QuickCheck >=2.4.0.1
-    , adjunctions
+    , adjunctions >=4.4 && <4.5
     , base
-    , data-default
-    , deepseq
-    , distributive
-    , fin-int
-    , integer-gmp
+    , data-default-class >=0.0 && <0.2
+    , deepseq >=1.1 && <1.5
+    , distributive >=0.1 && <0.7
+    , fin-int >=0.1 && <0.2
+    , integer-gmp >=0.5 && <1.1
     , lens
-    , numeric-kinds
-    , semigroupoids
+    , numeric-kinds >=0.1 && <0.2
+    , semigroupoids >=1.0 && <5.4
     , short-vec
-    , snumber
+    , snumber >=0.1 && <0.2
     , test-framework >=0.3.3
     , test-framework-hunit
     , test-framework-quickcheck2
-    , vector
   default-language: Haskell2010
 
 benchmark Vec-benchmark
@@ -91,19 +89,18 @@ benchmark Vec-benchmark
       test
   ghc-options: -Wall -Werror
   build-depends:
-      QuickCheck
-    , adjunctions
-    , base
-    , data-default
+      QuickCheck >=2.5 && <2.15
+    , adjunctions >=4.4 && <4.5
+    , base >=4.12 && <4.16
+    , data-default-class >=0.0 && <0.2
     , deepseq
-    , distributive
+    , distributive >=0.1 && <0.7
     , fin-int
     , gauge
-    , integer-gmp
+    , integer-gmp >=0.5 && <1.1
     , lens
-    , numeric-kinds
-    , semigroupoids
+    , numeric-kinds >=0.1 && <0.2
+    , semigroupoids >=1.0 && <5.4
     , short-vec
-    , snumber
-    , vector
+    , snumber >=0.1 && <0.2
   default-language: Haskell2010

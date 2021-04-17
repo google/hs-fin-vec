@@ -67,7 +67,7 @@ import Control.Arrow (first)
 import Control.DeepSeq (NFData(rnf))
 import Data.Coerce (coerce)
 import Data.Data (Data)
-import Data.Default
+import Data.Default.Class (Default(..))
 import Data.Kind (Type)
 import Data.Type.Attenuation (Attenuation, coercible)
 import Data.Type.Coercion (Coercion(..))

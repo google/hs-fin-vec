@@ -40,19 +40,18 @@ extra-source-files:
 ghc-options: -Wall -Werror
 
 dependencies:
-  - adjunctions
-  - base
-  - data-default
-  - deepseq
-  - distributive
-  - integer-gmp
+  - adjunctions >= 4.4 && < 4.5
+  - base >= 4.12 && < 4.16
+  - data-default-class >= 0.0 && < 0.2
+  - deepseq >= 1.1 && < 1.5
+  - distributive >= 0.1 && < 0.7
+  - integer-gmp >= 0.5 && < 1.1
   - lens
-  - fin-int
-  - semigroupoids
-  - snumber
-  - numeric-kinds
-  - QuickCheck
-  - vector
+  - fin-int >= 0.1 && < 0.2
+  - semigroupoids >= 1.0 && < 5.4
+  - snumber >= 0.1 && < 0.2
+  - numeric-kinds >= 0.1 && < 0.2
+  - QuickCheck >= 2.5 && < 2.15
 
 library:
   source-dirs: src

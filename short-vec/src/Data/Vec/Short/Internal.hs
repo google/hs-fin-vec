@@ -57,7 +57,7 @@ import Control.Applicative (Applicative(..))
 import Control.DeepSeq (NFData(rnf))
 import Control.Exception(assert)
 import qualified Data.Data as D
-import Data.Default (Default(..))
+import Data.Default.Class (Default(..))
 import Data.Distributive (Distributive(..))
 import Data.Fin.Int (Fin, finToInt, unsafeFin)
 import qualified Data.Foldable as F
