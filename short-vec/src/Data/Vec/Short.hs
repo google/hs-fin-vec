@@ -14,7 +14,7 @@
 
 {-# LANGUAGE TypeOperators #-}
 
-module Data.Vec
+module Data.Vec.Short
   ( Vec
   -- * Core constructors\/generators
   -- ** 'Fin'-based constructors
@@ -70,10 +70,10 @@ import GHC.TypeNats (KnownNat, type (+))
 import Data.Fin.Int (Fin)
 import Data.SNumber (snumberVal)
 
-import Data.Vec.Internal hiding
+import Data.Vec.Short.Internal hiding
   ( backpermute, mkVec, mkVec', split
   )
-import qualified Data.Vec.Internal as V
+import qualified Data.Vec.Short.Internal as V
 
 -- This module exposes API shims using KnownNat to quarantine SNumber inside of
 -- the data_vec package (for now; we may export both APIs in the future).

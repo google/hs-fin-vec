@@ -35,7 +35,7 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Data.Vec.Lens
+module Data.Vec.Short.Lens
     (
     -- ** List-based lenses
       list
@@ -76,7 +76,7 @@ import GHC.ST (runST)
 import GHC.TypeLits(KnownNat, type (+), type (<=), type (-))
 import qualified GHC.TypeLits
 
-import Data.Vec.Internal
+import Data.Vec.Short.Internal
 
 --------------------------------------------------------------------------------
 

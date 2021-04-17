@@ -57,9 +57,9 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
-    - Data.Vec
-    - Data.Vec.Internal
-    - Data.Vec.Lens
+    - Data.Vec.Short
+    - Data.Vec.Short.Internal
+    - Data.Vec.Short.Lens
 
 tests:
   Vec-test:

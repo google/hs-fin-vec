@@ -18,7 +18,7 @@ import Test.Framework (defaultMain)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 import Test.QuickCheck (Property, (===), counterexample)
-import Data.Vec (vec2, vec3)
+import Data.Vec.Short (vec2, vec3)
 
 main :: IO ()
 main = defaultMain

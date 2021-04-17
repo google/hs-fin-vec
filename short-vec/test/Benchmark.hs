@@ -26,7 +26,7 @@ import Data.Foldable (foldl', foldr', toList)
 import Data.Semigroup (Sum(..))
 
 import Control.DeepSeq (force)
-import Data.Vec
+import Data.Vec.Short
 import Data.Fin.Int (finToInt, modNegate)
 
 import qualified Gauge as G

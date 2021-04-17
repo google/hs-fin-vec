@@ -49,7 +49,7 @@
 -- interfaces along the way.
 --
 -- TODO(b/109668556): revisit all the inline pragmas.
-module Data.Vec.Internal where
+module Data.Vec.Short.Internal where
 
 import Prelude hiding ((++), concat)
 
