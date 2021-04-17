@@ -67,8 +67,8 @@ import Prelude hiding (concatMap, concat, iterate, (++))
 
 import GHC.TypeNats (KnownNat, type (+))
 
+import Data.Fin.Int (Fin)
 import Data.SNumber (snumberVal)
-import Numeric.Fin (Fin)
 
 import Data.Vec.Internal hiding
   ( backpermute, mkVec, mkVec', split

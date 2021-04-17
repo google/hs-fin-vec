@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7c1873013f327a73888728a82a0768a1a7e8b67bf068d6123e74275ef6fbabba
+-- hash: de12d4eb10ef3130a1653aa41a279729e41fd0d9df1cc454a0672fff7f3e378c
 
 name:           fin-int
 version:        0.1.0.0
@@ -32,11 +32,11 @@ source-repository head
 
 library
   exposed-modules:
-      Numeric.Fin
+      Data.Fin.Int
   other-modules:
       Paths_fin_int
   hs-source-dirs:
-      ./.
+      src
   ghc-options: -Wall -Werror
   build-depends:
       QuickCheck

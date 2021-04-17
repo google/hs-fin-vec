@@ -68,13 +68,13 @@ module Data.Vec.Lens
 import Prelude hiding ((++), concat, concatMap, iterate)
 import Control.Lens (FoldableWithIndex(..), FunctorWithIndex(..), Iso, Lens',
     TraversableWithIndex(..), iso, lens, from, swapped)
+import Data.Fin.Int (Fin, complementFin, finToInt)
 import qualified Data.Foldable as F
 import Data.Functor.Rep (ifoldMapRep, itraverseRep)
 import Data.SNumber (snumberVal)
 import GHC.ST (runST)
 import GHC.TypeLits(KnownNat, type (+), type (<=), type (-))
 import qualified GHC.TypeLits
-import Numeric.Fin
 
 import Data.Vec.Internal
 

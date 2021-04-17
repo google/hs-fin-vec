@@ -27,7 +27,7 @@ import Data.Semigroup (Sum(..))
 
 import Control.DeepSeq (force)
 import Data.Vec
-import Numeric.Fin (finToInt, modNegate)
+import Data.Fin.Int (finToInt, modNegate)
 
 import qualified Gauge as G
 

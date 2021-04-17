@@ -59,6 +59,7 @@ import Control.Exception(assert)
 import qualified Data.Data as D
 import Data.Default (Default(..))
 import Data.Distributive (Distributive(..))
+import Data.Fin.Int (Fin, finToInt, unsafeFin)
 import qualified Data.Foldable as F
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
@@ -81,7 +82,6 @@ import GHC.TypeNats
 import GHC.Natural (naturalToInteger, naturalToInt)
 import GHC.Integer (integerToInt)
 import Kinds.Integer (pattern Pos)
-import Numeric.Fin (Fin, finToInt, unsafeFin)
 import qualified Test.QuickCheck as QC
 
 --------------------------------------------------------------------------------

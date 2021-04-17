@@ -32,7 +32,7 @@
 -- | Finite natural numbers, with maximum value as part of the type.
 -- A value of type 'Fin' /n/ ranges from 0 to /n/-1.
 -- Operations that cause numbers to be out-of-range throw runtime errors.
-module Numeric.Fin
+module Data.Fin.Int
          ( -- * Finite Natural Numbers
            Fin, FinSize
            -- * Conversion

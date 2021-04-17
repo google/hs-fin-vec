@@ -42,6 +42,6 @@ dependencies:
   - QuickCheck
 
 library:
-  source-dirs: .
+  source-dirs: src
   exposed-modules:
-    - Numeric.Fin
+    - Data.Fin.Int
