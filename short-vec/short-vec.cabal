@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b29bdae8846cd81ff6d58ac479eab314861d83aa271f8cde9a53e2df84519e6b
+-- hash: 8c5c7cdd9c1031065a4351994b2cd10d48f826c35142eaab6285203ffd900097
 
 name:           short-vec
 version:        0.1.0.0
@@ -49,8 +49,9 @@ library
     , deepseq >=1.1 && <1.5
     , distributive >=0.1 && <0.7
     , fin-int >=0.1 && <0.2
+    , indexed-traversable >=0.1 && <0.2
     , integer-gmp >=0.5 && <1.1
-    , lens
+    , lens >=4.15 && <5.1
     , numeric-kinds >=0.1 && <0.2
     , semigroupoids >=1.0 && <5.4
     , snumber >=0.1 && <0.2
@@ -71,8 +72,9 @@ test-suite Vec-test
     , deepseq >=1.1 && <1.5
     , distributive >=0.1 && <0.7
     , fin-int >=0.1 && <0.2
+    , indexed-traversable >=0.1 && <0.2
     , integer-gmp >=0.5 && <1.1
-    , lens
+    , lens >=4.15 && <5.1
     , numeric-kinds >=0.1 && <0.2
     , semigroupoids >=1.0 && <5.4
     , short-vec
@@ -97,8 +99,9 @@ benchmark Vec-benchmark
     , distributive >=0.1 && <0.7
     , fin-int
     , gauge
+    , indexed-traversable >=0.1 && <0.2
     , integer-gmp >=0.5 && <1.1
-    , lens
+    , lens >=4.15 && <5.1
     , numeric-kinds >=0.1 && <0.2
     , semigroupoids >=1.0 && <5.4
     , short-vec

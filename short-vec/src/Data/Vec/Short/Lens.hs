@@ -66,8 +66,8 @@ module Data.Vec.Short.Lens
     ) where
 
 import Prelude hiding ((++), concat, concatMap, iterate)
-import Control.Lens (FoldableWithIndex(..), FunctorWithIndex(..), Iso, Lens',
-    TraversableWithIndex(..), iso, lens, from, swapped)
+import Control.Lens (Iso, Lens', iso, lens, from, swapped)
+import qualified Control.Lens as L
 import Data.Fin.Int (Fin, complementFin, finToInt)
 import qualified Data.Foldable as F
 import Data.Functor.Rep (ifoldMapRep, itraverseRep)
@@ -75,6 +75,10 @@ import Data.SNumber (snumberVal)
 import GHC.ST (runST)
 import GHC.TypeLits(KnownNat, type (+), type (<=), type (-))
 import qualified GHC.TypeLits
+
+import Data.Foldable.WithIndex (FoldableWithIndex(..))
+import Data.Functor.WithIndex (FunctorWithIndex(..))
+import Data.Traversable.WithIndex (TraversableWithIndex(..))
 
 import Data.Vec.Short.Internal
 
@@ -212,9 +216,18 @@ vdiagonal = lens getf setf
                 writeMV mi' i di
                 unsafeFreezeMV mi'
 
+-- TODO: Implement these instances via more efficient built-in functions.
+
 instance FunctorWithIndex (Fin n) (Vec n) where imap = mapWithPos
--- TODO: Implement via more efficient built-in functions.
-instance KnownNat n => FoldableWithIndex (Fin n) (Vec n)
-  where ifoldMap = ifoldMapRep
-instance KnownNat n => TraversableWithIndex (Fin n) (Vec n)
-  where itraverse = itraverseRep
+instance KnownNat n => FoldableWithIndex (Fin n) (Vec n) where
+  ifoldMap = ifoldMapRep
+instance KnownNat n => TraversableWithIndex (Fin n) (Vec n) where
+  itraverse = itraverseRep
+
+#if !MIN_VERSION_lens(5,0,0)
+instance L.FunctorWithIndex (Fin n) (Vec n) where imap = mapWithPos
+instance KnownNat n => L.FoldableWithIndex (Fin n) (Vec n) where
+  ifoldMap = ifoldMapRep
+instance KnownNat n => L.TraversableWithIndex (Fin n) (Vec n) where
+  itraverse = itraverseRep
+#endif
