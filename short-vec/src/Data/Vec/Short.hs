@@ -94,8 +94,6 @@ split :: KnownNat m => Vec (m + n) a -> (Vec m a, Vec n a)
 split = V.split snumberVal
 {-# INLINE split #-}
 
-reshape
-  :: (KnownNat m, KnownNat n)
-  => Vec (n * m) a -> Vec n (Vec m a)
+reshape :: KnownNat m => Vec (n * m) a -> Vec n (Vec m a)
 reshape = V.reshape snumberVal
 {-# INLINE reshape #-}

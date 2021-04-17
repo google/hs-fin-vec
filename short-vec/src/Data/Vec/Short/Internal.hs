@@ -68,7 +68,7 @@ import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
 import Data.Proxy (Proxy)
 import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
-import Data.SNumber (SNumber(..), snumberVal, reifySNumberAsNat)
+import Data.SNumber (SNumber(..), snumberVal, reifySNumberAsNat, divExact)
 import qualified Data.SNumber as S
 import Data.Type.Equality (gcastWith)
 import GHC.Exts (Int(I#), Proxy#, State#, SmallMutableArray#, SmallArray#,
@@ -1216,14 +1216,11 @@ concat xs =
 
 -- | Turn a vector into a vector of vector by chunking it.
 -- Leftover elements are thrown away.
--- TODO: Only one of the KnownNats is needed.
-reshape
-    :: forall m n a nm
-    .  (KnownNat m, KnownNat n, (n * m) ~ nm)
-    => SInt m -> Vec nm a -> Vec n (Vec m a)
+reshape :: SInt m -> Vec (n * m) a -> Vec n (Vec m a)
 reshape m =
-    let !m' = unSNumber m
-    in \xs -> mkVec snumberVal (\i -> sliceVec xs (finToInt i * m') m)
+  let !m' = unSNumber m
+  in  \xs ->
+        mkVec (svSize xs `divExact` m) (\i -> sliceVec xs (finToInt i * m') m)
 {-# INLINE reshape #-}
 
 concatMap :: forall m n a b. (a -> Vec m b) -> Vec n a -> Vec (n * m) b

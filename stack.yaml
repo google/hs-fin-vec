@@ -22,7 +22,7 @@ extra-deps:
 - github: google/hs-attenuation
   commit: 3243f2586e5908a09fdd0c5ee32b0adc72271fc4
 - github: google/hs-dependent-literals
-  commit: 995004a72173630d77fc858b5cc83da2f8d436f7
+  commit: 5507063f0c4227e02d00ee70b77941cc78b96649
   subdirs:
     - numeric-kinds
     - snumber

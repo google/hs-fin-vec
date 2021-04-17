@@ -117,9 +117,8 @@ chopped :: (KnownNat m) => Iso (Vec (m + n) a)    (Vec (o + p) b)
                                (Vec m a, Vec n a) (Vec o b, Vec p b)
 chopped = iso (split snumberVal) (uncurry (++))
 
--- TODO: Only one of the KnownNats needed.
 -- | A vector can be split (isomorphically) into a vector of vectors.
-subVecs :: (KnownNat m, KnownNat n, (n GHC.TypeLits.* m) ~ nm, (p GHC.TypeLits.* o) ~ po)
+subVecs :: (KnownNat m, (n GHC.TypeLits.* m) ~ nm, (p GHC.TypeLits.* o) ~ po)
         => Iso (Vec nm a)        (Vec po b)
                (Vec n (Vec m a)) (Vec p (Vec o b))
 subVecs = iso (reshape snumberVal) concat
