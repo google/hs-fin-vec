@@ -12,13 +12,19 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Main where
+
+import Prelude hiding ((++))
 
 import Test.Framework (defaultMain)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-
 import Test.QuickCheck (Property, (===), counterexample)
-import Data.Vec.Short (vec2, vec3)
+
+import Data.Vec.Short ((++), Vec, split, vec2, vec3)
 
 main :: IO ()
 main = defaultMain
@@ -26,6 +32,9 @@ main = defaultMain
       vec2 (3 :: Int) 5
   , testProperty "vec of vec" $ readInvertsShow $
       vec3 (vec2 (2 :: Int) 4) (vec2 3 5) (vec2 4 6)
+  , testProperty "append of split" $ \ (v :: Vec 8 Int) ->
+      let (l, r) = split @5 v
+      in  v === l ++ r
   ]
   where
     readInvertsShow :: (Eq a, Read a, Show a) => a -> Property

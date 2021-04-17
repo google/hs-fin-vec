@@ -68,7 +68,9 @@ import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
 import Data.Proxy (Proxy)
 import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
-import Data.SNumber (SNumber(..), snumberVal, withSNumberAsNat)
+import Data.SNumber (SNumber(..), snumberVal, reifySNumberAsNat)
+import qualified Data.SNumber as S
+import Data.Type.Equality (gcastWith)
 import GHC.Exts (Int(I#), Proxy#, State#, SmallMutableArray#, SmallArray#,
     cloneSmallArray#, copySmallArray#, indexSmallArray#, newSmallArray#,
     sizeofSmallArray#, thawSmallArray#, unsafeFreezeSmallArray#,
@@ -81,7 +83,7 @@ import GHC.TypeNats
     , SomeNat(..), natVal', someNatVal)
 import GHC.Natural (naturalToInteger, naturalToInt)
 import GHC.Integer (integerToInt)
-import Kinds.Integer (pattern Pos)
+import Kinds.Integer (pattern Pos, plusMinusInverseL)
 import qualified Test.QuickCheck as QC
 
 --------------------------------------------------------------------------------
@@ -271,28 +273,23 @@ unsafeCopyVec (V# src) (I# srcOff) (MV# dst) (I# dstOff) (I# len) =
 -- Avoid 0 length copies.
 {-# RULES "unsafeCopyVec/0" forall v s m d . unsafeCopyVec v s m d 0 = return () #-}
 
--- | This function is /type-unsafe/: because it assumes the second 'Int'
--- argument is in fact the reflection of @m@; thereby opening the way
--- for bugs, as described in [Note TypeUnsafety]. Moreover, its type is
--- insufficiently specific to ensure memory-safety: because it assumes
--- the 'Int' arguments are in-bounds for the 'Vec' argument. However,
--- it is in fact memory-safe: because we dynamically check the validity
--- of the 'Int's.
+-- | Return a known-length slice of a given vector.
 --
--- TODO(b/109671253): we should be able to easily change the second 'Int'
--- to a 'Proxy' or 'Fin', thereby making the @m@ index type-safe at least.
-unsafeSliceVec :: Vec n a -> Int -> Int -> Vec m a
-unsafeSliceVec xs@(V# sa) off@(I# o) len@(I# l) =
+-- Since the type is insufficiently specific to ensure memory-safety on its own
+-- (because the offset argument is just 'Int'), this needs to perform runtime
+-- bounds checks to ensure memory safety.
+sliceVec :: Vec n a -> Int -> SInt m -> Vec m a
+sliceVec xs@(V# sa) off@(I# o) (N# len@(I# l)) =
     assert (0 <= off && 0 <= len && len <= vSize xs - off) $
     V# (cloneSmallArray# sa o l)
-{-# INLINE unsafeSliceVec #-}
+{-# INLINE sliceVec #-}
 
 {-
 -- If we define a @i :<: n@ type whose witnesses are isomorphic to @i@
 -- itself, then we can implement these safely by rephrasing the Pi-type
 -- @(i :: Fin n) -> t@ as the non-Pi @forall i. i :<: n -> t@. Otherwise
 -- we can only do unsafe implementations, like the 'unsafeCopyVec' and
--- 'unsafeSliceVec' above. All the ones that use 'Min' will want to add
+-- 'sliceVec' above. All the ones that use 'Min' will want to add
 -- {-# OPTIONS_GHC -fplugin=GHC.TypeLits.Extra.Solver #-} to infer well.
 
 sliceVec
@@ -381,8 +378,8 @@ vSize = unSNumber . svSize
 -- | Dynamically determine the (actual) size\/length of the vector,
 -- returning evidence that @n@ is \"known\". If you'd rather obtain @n@
 -- as a standard 'Int', see 'vSize'.
-withSize :: forall n a r . Vec n a -> (KnownNat n  => r) -> r
-withSize !xs f = withSNumberAsNat (svSize xs) f
+withSize :: forall n a r . Vec n a -> (KnownNat n => r) -> r
+withSize !xs f = reifySNumberAsNat (svSize xs) f
 {-# INLINE withSize #-}
 
 --------------------------------------------------------------------------------
@@ -1156,9 +1153,9 @@ append_ xs ys = runST $ do
 -- with different types.
 -- TODO: might as well simply call the underlying
 -- 'thawSmallArray#' directly, instead of passing through
--- 'unsafeSliceVec'... ne? (i.e., to avoid the dynamic bounds checks)
+-- 'sliceVec'... ne? (i.e., to avoid the dynamic bounds checks)
 take_ :: SInt m -> Vec (m + n) a -> Vec m a
-take_ m xs = unsafeSliceVec xs 0 (unSNumber m)
+take_ m xs = sliceVec xs 0 m
 {-# NOINLINE take_ #-}
 -- TODO(awpr): fusion behaves poorly here because of Core-level casts arising
 -- from unifying @m + n@ with some other Nat: we get
@@ -1180,7 +1177,9 @@ take_ m xs = unsafeSliceVec xs 0 (unSNumber m)
 -- TODO(b/109675695): may want other variants of this operational-function
 -- with different types.
 drop_ :: forall m n a. SInt m -> Vec (m + n) a -> Vec n a
-drop_ (unSNumber -> m) xs = unsafeSliceVec xs m (vSize xs - m)
+drop_ m xs =
+  sliceVec xs (unSNumber m) $
+  gcastWith (plusMinusInverseL @m @n) (svSize xs `S.chkSub` m)
 {-# NOINLINE drop_ #-}
 -- TODO(awpr): as with 'take_', casts are causing trouble here.  Consider
 -- messing with the type signature to avoid them.
@@ -1221,10 +1220,10 @@ concat xs =
 reshape
     :: forall m n a nm
     .  (KnownNat m, KnownNat n, (n * m) ~ nm)
-    => Vec nm a -> Vec n (Vec m a)
-reshape =
-    let !m = nat2int @m
-    in \xs -> mkVec snumberVal (\i -> unsafeSliceVec xs (finToInt i * m) m)
+    => SInt m -> Vec nm a -> Vec n (Vec m a)
+reshape m =
+    let !m' = unSNumber m
+    in \xs -> mkVec snumberVal (\i -> sliceVec xs (finToInt i * m') m)
 {-# INLINE reshape #-}
 
 concatMap :: forall m n a b. (a -> Vec m b) -> Vec n a -> Vec (n * m) b

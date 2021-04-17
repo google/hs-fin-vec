@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+{-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Data.Vec.Short
@@ -65,13 +66,13 @@ module Data.Vec.Short
 
 import Prelude hiding (concatMap, concat, iterate, (++))
 
-import GHC.TypeNats (KnownNat, type (+))
+import GHC.TypeNats (KnownNat, type (+), type (*))
 
 import Data.Fin.Int (Fin)
 import Data.SNumber (snumberVal)
 
 import Data.Vec.Short.Internal hiding
-  ( backpermute, mkVec, mkVec', split
+  ( backpermute, mkVec, mkVec', split, reshape
   )
 import qualified Data.Vec.Short.Internal as V
 
@@ -92,3 +93,9 @@ backpermute = V.backpermute snumberVal
 split :: KnownNat m => Vec (m + n) a -> (Vec m a, Vec n a)
 split = V.split snumberVal
 {-# INLINE split #-}
+
+reshape
+  :: (KnownNat m, KnownNat n)
+  => Vec (n * m) a -> Vec n (Vec m a)
+reshape = V.reshape snumberVal
+{-# INLINE reshape #-}

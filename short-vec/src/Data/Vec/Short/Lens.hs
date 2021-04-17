@@ -122,7 +122,7 @@ chopped = iso (split snumberVal) (uncurry (++))
 subVecs :: (KnownNat m, KnownNat n, (n GHC.TypeLits.* m) ~ nm, (p GHC.TypeLits.* o) ~ po)
         => Iso (Vec nm a)        (Vec po b)
                (Vec n (Vec m a)) (Vec p (Vec o b))
-subVecs = iso reshape concat
+subVecs = iso (reshape snumberVal) concat
 
 -- | A vector is isomorphic to its reversal.
 reversed :: Iso (Vec n a) (Vec m b)
@@ -168,7 +168,7 @@ sliced (finToInt -> !start) = lens getf setf
     !end  = start + m
     !rest = n - end -- the length of the post-slice portion of the vector
 
-    getf xs    = unsafeSliceVec xs start m
+    getf xs    = sliceVec xs start snumberVal
     setf xs ys =
         createVec snumberVal $ \mv -> do
             unsafeCopyVec xs 0   mv 0     start
