@@ -16,6 +16,10 @@
 {-# OPTIONS_GHC -fno-float-in #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
+-- Make Haddock prefer to link to Data.Vec.Short rather than here, and not
+-- complain about missing docs for package-internal functions.
+{-# OPTIONS_HADDOCK not-home, prune #-}
+
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
@@ -35,23 +39,23 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE ViewPatterns #-}
 
--- | An implementation of small vectors.
+-- | An implementation of short vectors.
 --
 -- The underlying implementation uses the 'SmallArray#' primitive,
--- which lacks the \"card marking\" of 'Array#': the upside being that
--- it avoids the overhead of maintaining the card state, the downside
+-- which lacks the \"card marking\" of 'GHC.Exts.Array#': the upside being
+-- that it avoids the overhead of maintaining the card state, the downside
 -- being that the garbage collector must scan through the entire array
 -- rather than just the parts marked as having changed since the last GC.
 -- Using 'SmallArray#' is typically a win for arrays with fewer than 128
 -- elements.
---
+
 -- TODO(b/109667526): add rewrite rules, and maybe builder and view
 -- interfaces along the way.
 --
 -- TODO(b/109668556): revisit all the inline pragmas.
 module Data.Vec.Short.Internal where
 
-import Prelude hiding ((++), concat)
+import Prelude hiding ((++), concat, iterate)
 
 import Control.Applicative (Applicative(..))
 import Control.DeepSeq (NFData(rnf))
@@ -89,6 +93,10 @@ import qualified Test.QuickCheck as QC
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- | A convenience alias for the form of 'SNumber' we use here.
+--
+-- This provides both a type-level 'Nat' and a trusted runtime value for it,
+-- represented as an 'Int'.
 type SInt n = SNumber Int ('Pos n)
 
 foldrEnumFin :: SInt n -> (Fin n -> a -> a) -> a -> a
@@ -160,7 +168,7 @@ prim_ f = ST $ \s0 -> case f s0 of s1 -> (# s1, () #)
 -- holding the 'Vec' view, thereby violating the purity of Haskell.
 
 
--- | The particular instance of 'natVal' or 'valueOf' that we want
+-- | The particular instance of 'GHC.TypeNats.natVal' or 'valueOf' that we want
 -- pretty much everywhere.
 --
 -- TODO(b/109668374): 'valueOf' ends up calling 'fromIntegral' in ways
@@ -326,6 +334,11 @@ fusibleFetch :: Vec n a -> Fin n -> (# a #)
 fusibleFetch = _aIndex . access
 {-# INLINE fusibleFetch #-}
 
+-- | Extract the given index from a 'Vec'.
+--
+-- This is subject to fusion if this is the only use of its input, so code like
+-- @fmap f v ! i@ (which might arise due to inlining) will optimize to
+-- @f (v ! i)@.
 (!) :: Vec n a -> Fin n -> a
 (!) xs i = case fusibleFetch xs i of (# x #) -> x
 {-# INLINE (!) #-}
@@ -608,9 +621,10 @@ unsafeMkVec :: Int -> (Int -> a) -> Vec n a
 unsafeMkVec n f = mkVec (N# n) $ \i -> f (finToInt i)
 {-# INLINE unsafeMkVec #-}
 
--- | Create a known-length vector using a pure function. If you lack the
--- 'KnownNat' instance but already have a 'Vec' of the desired length,
--- see 'mkVecPos' instead.
+-- | Create a known-length vector using a pure function.
+--
+-- Note if you already have a 'Vec' of the desired length, you can use 'svSize'
+-- to get the 'SInt' parameter.
 tabulateVec, mkVec :: SInt n -> (Fin n -> a) -> Vec n a
 tabulateVec n f = materialize $ Accessor n $ \i -> (# f i #)
 mkVec = tabulateVec
@@ -1025,7 +1039,7 @@ instance Foldable (Vec n) where
     elem x = coerce . foldMap (Any . (== x))
     {-# INLINE elem #-}
 
--- | A fusion of 'toList' and 'withPos' to avoid allocating the
+-- | A fusion of 'F.toList' and 'withPos' to avoid allocating the
 -- intermediate array. This is a \"good producer\" for list fusion.
 --
 -- TODO(awpr): this shouldn't be necessary with the fusion framework in place.
@@ -1097,10 +1111,9 @@ instance KnownNat n => Representable (Vec n) where
     index = (!)
     {-# INLINE index #-}
 
--- | 'Prelude.'scanl, for 'Vec'.
---
--- TODO(awpr): we can probably subject the input Vec to fusion here.
+-- | 'Prelude.scanl', for 'Vec'.
 vscanl :: KnownNat (1 + n) => (b -> a -> b) -> b -> Vec n a -> Vec (1 + n) b
+-- TODO(awpr): we can probably subject the input Vec to fusion here.
 vscanl f b = listVec snumberVal . scanl f b . F.toList
 
 
@@ -1108,6 +1121,7 @@ vscanl f b = listVec snumberVal . scanl f b . F.toList
 --------------------------------------------------------------------------------
 -- List like ops and their isomorphisms.
 
+-- | A zero-length 'Vec' of any element type.
 nil :: Vec 0 a
 -- Note: in the C-- code, this is a single global thunk with a polymorphic
 -- type; we won't re-create it separately for different types.  The NOINLINE
@@ -1128,6 +1142,7 @@ nil = mkVec snumberVal (\i -> i `seq` error "Vec.nil: the impossible happened")
 
 ----------------
 
+-- | Concatenate two 'Vec's.
 infixr 5 ++
 append_, (++) :: Vec n a -> Vec m a -> Vec (n + m) a
 append_ xs ys = runST $ do
@@ -1200,6 +1215,8 @@ split m xs =
 {-# INLINE split #-}
 
 -- TODO(awpr): fusion for 'concat' and 'reshape'?
+
+-- | Concatenate a nested 'Vec' into one longer 'Vec'.
 concat :: forall m n a. Vec n (Vec m a) -> Vec (n * m) a
 concat xs =
   let !n = vSize xs
@@ -1215,7 +1232,6 @@ concat xs =
 {-# INLINE concat #-}
 
 -- | Turn a vector into a vector of vector by chunking it.
--- Leftover elements are thrown away.
 reshape :: SInt m -> Vec (n * m) a -> Vec n (Vec m a)
 reshape m =
   let !m' = unSNumber m
@@ -1223,6 +1239,7 @@ reshape m =
         mkVec (svSize xs `divExact` m) (\i -> sliceVec xs (finToInt i * m') m)
 {-# INLINE reshape #-}
 
+-- | Map each element of a 'Vec' to a (same-sized) sub-'Vec' of the result.
 concatMap :: forall m n a b. (a -> Vec m b) -> Vec n a -> Vec (n * m) b
 concatMap f = concat . fmap f
 {-# INLINE concatMap #-}
@@ -1330,14 +1347,16 @@ remove i = unsafeRemove (finToInt i)
 
 --------------------------------
 
-
-vsort :: (Ord a) => Vec n a -> Vec n a
+-- | Sort a 'Vec' according to its 'Ord' instance.
+vsort :: Ord a => Vec n a -> Vec n a
 vsort xs = listVec (svSize xs) . L.sort . F.toList $ xs
 
+-- | Sort a 'Vec' with a given comparison function.
 vsortBy :: (a -> a -> Ordering) -> Vec n a -> Vec n a
 vsortBy f xs = listVec (svSize xs). L.sortBy f . F.toList $ xs
 
-vsortOn :: (Ord b) => (a -> b) -> Vec n a -> Vec n a
+-- | Sort a 'Vec' with a given sort-key function.
+vsortOn :: Ord b => (a -> b) -> Vec n a -> Vec n a
 vsortOn f xs = listVec (svSize xs). L.sortOn f . F.toList $ xs
 
 
@@ -1356,15 +1375,18 @@ vtranspose xs =
 
 --------------------------------
 
+-- | Find the index of the first element, if any, that satisfies a predicate.
 vfindIndex :: (a -> Bool) -> Vec n a -> Maybe (Fin n)
 vfindIndex p = fmap unsafeFin . L.findIndex p . F.toList
 
 --------------------------------
 
+-- | Create a singleton 'Vec'.
 vec1 :: a -> Vec 1 a
 vec1 = pure
 {-# INLINE vec1 #-}
 
+-- | Create a 'Vec' from two elements.
 vec2 :: a -> a -> Vec 2 a
 vec2 x0 x1 = mkVec snumberVal $ \i -> case i of
   0 -> x0
@@ -1372,6 +1394,7 @@ vec2 x0 x1 = mkVec snumberVal $ \i -> case i of
   _ -> error "Impossible: Fin out of range"
 {-# INLINE vec2 #-}
 
+-- | Create a 'Vec' from three elements.
 vec3 :: a -> a -> a -> Vec 3 a
 vec3 x0 x1 x2 = mkVec snumberVal $ \i -> case i of
   0 -> x0
@@ -1380,6 +1403,7 @@ vec3 x0 x1 x2 = mkVec snumberVal $ \i -> case i of
   _ -> error "Impossible: Fin out of range"
 {-# INLINE vec3 #-}
 
+-- | Create a 'Vec' from four elements.
 vec4 :: a -> a -> a -> a -> Vec 4 a
 vec4 x0 x1 x2 x3 = mkVec snumberVal $ \i -> case i of
   0 -> x0
@@ -1389,6 +1413,7 @@ vec4 x0 x1 x2 x3 = mkVec snumberVal $ \i -> case i of
   _ -> error "Impossible: Fin out of range"
 {-# INLINE vec4 #-}
 
+-- | Create a 'Vec' from six elements.
 vec6 :: a -> a -> a -> a -> a -> a ->Vec 6 a
 vec6 x0 x1 x2 x3 x4 x5 = mkVec snumberVal $ \i -> case i of
   0 -> x0
@@ -1400,6 +1425,7 @@ vec6 x0 x1 x2 x3 x4 x5 = mkVec snumberVal $ \i -> case i of
   _ -> error "Impossible: Fin out of range"
 {-# INLINE vec6 #-}
 
+-- | Create a 'Vec' from eight elements.
 vec8 :: a -> a -> a -> a -> a -> a -> a -> a -> Vec 8 a
 vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec snumberVal $ \i -> case i of
   0 -> x0
@@ -1415,7 +1441,7 @@ vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec snumberVal $ \i -> case i of
 
 ---------------------------
 
--- | Get the value a statically known natural number.
+-- | Get the value of a statically known natural number.
 {-# INLINE valueOf #-}
 valueOf :: forall (n :: Nat) (i :: Type) . (KnownNat n, Num i) => i
 valueOf = fromIntegral $ natVal' (proxy# :: Proxy# n)
@@ -1426,6 +1452,7 @@ valueOf = fromIntegral $ natVal' (proxy# :: Proxy# n)
       in i
   #-}
 
+-- | Modify the given index of a 'Vec'.
 overIx :: Fin n -> (a -> a) -> Vec n a -> Vec n a
 overIx i f v = runST $ do
   mv <- safeThawMV v

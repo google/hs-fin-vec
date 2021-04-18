@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- | Lenses and related optics for 'Vec's.
+
 -- Work around <https://ghc.haskell.org/trac/ghc/ticket/14511>
 {-# OPTIONS_GHC -fno-float-in #-}
 {-# OPTIONS_GHC -Wno-orphans #-}

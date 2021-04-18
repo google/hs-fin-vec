@@ -30,7 +30,7 @@
 {-# LANGUAGE TypeOperators #-}
 
 -- | Finite natural numbers, with maximum value as part of the type.
--- A value of type 'Fin' /n/ ranges from 0 to /n/-1.
+-- A value of type @'Fin' n@ ranges from @0@ to @n - 1@.
 -- Operations that cause numbers to be out-of-range throw runtime errors.
 module Data.Fin.Int
          ( -- * Finite Natural Numbers
@@ -86,6 +86,7 @@ import Test.QuickCheck (Arbitrary(..), arbitraryBoundedEnum)
 -- because it's the type used to index into containers such as Data.Vector.
 type FinRep = Int
 
+-- | Naturals bounded above by @n@.
 newtype Fin (n :: Nat) = Fin FinRep
   deriving (Eq, Ord, Data)
 
@@ -118,7 +119,7 @@ instance (FinSize n) => Arbitrary (Fin n) where
 
 instance NFData (Fin n) where rnf (Fin x) = rnf x
 
--- | This is similar to fromInteger, but you get a stack trace on error.
+-- | This is similar to 'fromInteger', but you get a stack trace on error.
 {-# INLINE fin #-}
 fin :: forall n a. (HasCallStack, KnownNat n, Integral a, Show a) => a -> Fin n
 fin i' | i <  0 = error $ "Fin: number out of range " ++ show i ++ " < 0"
@@ -141,7 +142,7 @@ ufin i | i >= n = error $ "Fin: number out of range " ++ show i ++ " >= "
   !n = valueOf @n
 
 -- | Like 'fin', but doesn't do any bounds checks. However, unlike
--- 'unsafeFin', this is safe (in virtue of the type constraints).
+-- 'unsafeFin', this is safe (by virtue of the type constraints).
 knownFin :: forall i n. (KnownNat i, i <= n - 1) => Fin n
 knownFin = unsafeFin (valueOf @i :: FinRep)
 {-# INLINE knownFin #-}
@@ -151,13 +152,13 @@ knownFin = unsafeFin (valueOf @i :: FinRep)
 unsafeFin :: Integral a => a -> Fin n
 unsafeFin = Fin . fromIntegral
 
--- | Convert a number to a Fin, or Nothing if out of range.
+-- | Convert a number to a @Fin@, or @Nothing@ if out of range.
 tryFin :: forall n a. (Integral a, KnownNat n) => a -> Maybe (Fin n)
 tryFin x = if x >= 0 && x < valueOf @n
            then Just (Fin (fromIntegral x))
            else Nothing
 
--- | @finMod \@n x@ is equivalent to @fin \@n (x `mod` (valueOf @n))@
+-- | @finMod \@n x@ is equivalent to @fin \@n (x `mod` (valueOf \@n))@
 --
 -- This raises an exception iff @n ~ 0@.  It could have been written with a
 -- @0 < n@ constraint instead, but that would be annoying to prove repeatedly.
@@ -204,7 +205,7 @@ twice (Fin i) = ufin $ i * 2
 half :: Fin n -> Fin n
 half (Fin n) = Fin (n `quot` 2)
 
--- ! Divide by 4, rounding down.
+-- | Divide by 4, rounding down.
 quarter :: Fin n -> Fin n
 quarter (Fin n) = Fin (n `quot` 4)
 
@@ -230,37 +231,37 @@ unsafeSucc (Fin x) = Fin (x + 1)
 -- | Enumerate the entire domain in ascending order. This is equivalent
 -- to @enumFrom 0@ or @enumFrom minBound@, but without introducing a
 -- spurious @(1 <= n)@ constraint.
--- See Note [Enumerations of Fins]
 enumFin :: forall n. KnownNat n => [Fin n]
+-- See Note [Enumerations of Fins]
 enumFin = map coerce [(0 :: FinRep) .. valueOf @n - 1]
 {-# INLINE enumFin #-}
 
 -- | Enumerate the entire domain in descending order. This is equivalent
 -- to @reverse enumFin@, but without introducing a spurious @(1 <= n)@
 -- constraint or breaking list-fusion.
--- See Note [Enumerations of Fins]
 enumFinDown :: forall n. KnownNat n => [Fin n]
+-- See Note [Enumerations of Fins]
 enumFinDown = map coerce [(valueOf @n - 1 :: FinRep), valueOf @n - 2 .. 0]
 {-# INLINE enumFinDown #-}
 
 -- | Equivalent to @reverse (enumFromTo 0 x)@ but without introducing
 -- a spurious @(1 <= n)@ constraint or breaking list-fusion.
--- See Note [Enumerations of Fins]
 enumDownFrom :: forall n. KnownNat n => Fin n -> [Fin n]
+-- See Note [Enumerations of Fins]
 enumDownFrom (Fin x) = map coerce [x, x - 1 .. 0]
 {-# INLINE enumDownFrom #-}
 
 -- | Equivalent to @reverse (enumFromTo x maxBound)@ but without
 -- introducing a spurious @(1 <= n)@ constraint or breaking list-fusion.
--- See Note [Enumerations of Fins]
 enumDownTo :: forall n. KnownNat n => Fin n -> [Fin n]
+-- See Note [Enumerations of Fins]
 enumDownTo (Fin x) = map coerce [valueOf @n - 1, valueOf @n - 2 .. x]
 {-# INLINE enumDownTo #-}
 
 -- | Equivalent to @reverse (enumFromTo y x)@ but without introducing
 -- a spurious @(1 <= n)@ constraint or breaking list-fusion.
--- See Note [Enumerations of Fins]
 enumDownFromTo :: forall n. KnownNat n => Fin n -> Fin n -> [Fin n]
+-- See Note [Enumerations of Fins]
 enumDownFromTo (Fin x) (Fin y) = map coerce [x, x - 1 .. y]
 {-# INLINE enumDownFromTo #-}
 
@@ -379,6 +380,8 @@ mkMod nm op = \ x y -> case x `op` y of
 -- | Add modulo /n/.
 --
 -- Raises error when intermediate results overflow Int.
+--
+-- 'modAdd' and ('+%') are different names for the same function.
 modAdd, (+%) :: forall n. (HasCallStack, KnownNat n) => Fin n -> Fin n -> Fin n
 modAdd = withFrozenCallStack mkMod "modAdd" add_
 (+%) = withFrozenCallStack mkMod "(+%)" add_
@@ -386,6 +389,8 @@ modAdd = withFrozenCallStack mkMod "modAdd" add_
 {-# INLINEABLE (+%) #-}
 
 -- | Subtract modulo /n/.
+--
+-- 'modSub' and ('-%') are different names for the same function.
 modSub, (-%) :: forall n. KnownNat n => Fin n -> Fin n -> Fin n
 -- Cannot fail, so no HasCallStack.
 modSub = mkMod "modSub" sub_
@@ -396,6 +401,8 @@ modSub = mkMod "modSub" sub_
 -- | Multiply modulo /n/.
 --
 -- Raises error when intermediate results overflow Int.
+--
+-- 'modMul' and ('*%') are different names for the same function.
 modMul, (*%) :: forall n. (HasCallStack, KnownNat n) => Fin n -> Fin n -> Fin n
 modMul = withFrozenCallStack mkMod "modMul" mul_
 (*%) = withFrozenCallStack mkMod "(*%)" mul_
@@ -403,7 +410,10 @@ modMul = withFrozenCallStack mkMod "modMul" mul_
 {-# INLINEABLE (*%) #-}
 
 -- | Negate modulo /n/.
-modNegate :: forall n . (KnownNat n) => Fin n -> Fin n
+--
+-- Compared to 'complementFin', this is shifted by 1:
+-- @complementFin 0 :: Fin n = n - 1@, while @modNegate 0 :: Fin n = 0@.
+modNegate :: forall n. KnownNat n => Fin n -> Fin n
 modNegate x@(Fin 0) = x
 modNegate (Fin x) = Fin (n - x)
   where n = valueOf @n
@@ -437,6 +447,7 @@ tryMul = mkTry mul_
 {-# INLINEABLE tryMul #-}
 {-# INLINEABLE (*?) #-}
 
+-- | Split a 'Fin' of the form @d*x + y@ into @(x, y)@.
 divModFin
   :: forall m d. (KnownNat d, KnownNat m) => Fin (d * m) -> (Fin d, Fin m)
 divModFin (Fin x) = (Fin d, Fin m)
@@ -454,6 +465,8 @@ mkChk nm op = \x y -> case op x y of
 {-# INLINE mkChk #-}
 
 -- | Add and assert the result is in-range.
+--
+-- 'chkAdd' and ('+!') are different names for the same function.
 chkAdd, (+!) :: (HasCallStack, KnownNat n) => Fin n -> Fin n -> Fin n
 chkAdd = withFrozenCallStack mkChk "chkAdd" add_
 (+!) = withFrozenCallStack mkChk "(+!)" add_
@@ -461,6 +474,8 @@ chkAdd = withFrozenCallStack mkChk "chkAdd" add_
 {-# INLINEABLE (+!) #-}
 
 -- | Subtract and assert the result is in-range.
+--
+-- 'chkSub' and ('-!') are different names for the same function.
 chkSub, (-!) :: (HasCallStack, KnownNat n) => Fin n -> Fin n -> Fin n
 chkSub = withFrozenCallStack mkChk "chkSub" sub_
 (-!) = withFrozenCallStack mkChk "(-!)" sub_
@@ -468,6 +483,8 @@ chkSub = withFrozenCallStack mkChk "chkSub" sub_
 {-# INLINEABLE (-!) #-}
 
 -- | Multiply and assert the result is in-range.
+--
+-- 'chkMul' and ('*!') are different names for the same function.
 chkMul, (*!) :: (HasCallStack, KnownNat n) => Fin n -> Fin n -> Fin n
 chkMul = withFrozenCallStack mkChk "chkMul" mul_
 (*!) = withFrozenCallStack mkChk "(*!)" mul_

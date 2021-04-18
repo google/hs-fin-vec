@@ -12,6 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- | An implementation of short vectors.
+--
+-- The underlying implementation uses the 'GHC.Exts.SmallArray#' primitive,
+-- which is best-suited for short vectors (less than a few hundred elements).
+
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -79,21 +84,31 @@ import qualified Data.Vec.Short.Internal as V
 -- This module exposes API shims using KnownNat to quarantine SNumber inside of
 -- the data_vec package (for now; we may export both APIs in the future).
 
-mkVec, mkVec' :: KnownNat n => (Fin n -> a) -> Vec n a
+-- | Create a known-length vector using a pure function.
+--
+-- Note if you don't have the 'KnownNat' instance at hand, but you already have
+-- a 'Vec' of the desired length, you can use 'withSize' to get the 'KnownNat'
+-- instance.
+mkVec :: KnownNat n => (Fin n -> a) -> Vec n a
 mkVec = V.mkVec snumberVal
 {-# INLINE mkVec #-}
 
+-- | Create a known-length vector using a pure function, strictly.
+mkVec' :: KnownNat n => (Fin n -> a) -> Vec n a
 mkVec' = V.mkVec' snumberVal
 {-# INLINE mkVec' #-}
 
+-- | Create a 'Vec' by selecting indices of another 'Vec'.
 backpermute :: KnownNat m => (Fin m -> Fin n) -> Vec n a -> Vec m a
 backpermute = V.backpermute snumberVal
 {-# INLINE backpermute #-}
 
+-- | Split a 'Vec' into two at a given offset.
 split :: KnownNat m => Vec (m + n) a -> (Vec m a, Vec n a)
 split = V.split snumberVal
 {-# INLINE split #-}
 
+-- | Split a 'Vec' into a 'Vec' of equal-sized chunks.
 reshape :: KnownNat m => Vec (n * m) a -> Vec n (Vec m a)
 reshape = V.reshape snumberVal
 {-# INLINE reshape #-}
