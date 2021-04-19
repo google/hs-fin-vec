@@ -69,7 +69,6 @@ module Data.Vec.Short.Lens
 
 import Prelude hiding ((++), concat, concatMap, iterate)
 import Control.Lens (Iso, Lens', iso, lens, from, swapped)
-import qualified Control.Lens as L
 import Data.Fin.Int (Fin, complementFin, finToInt)
 import qualified Data.Foldable as F
 import Data.Functor.Rep (ifoldMapRep, itraverseRep)
@@ -84,6 +83,10 @@ import Data.Traversable.WithIndex (TraversableWithIndex(..))
 
 import Data.Vec.Short.Internal
 
+#if !MIN_VERSION_lens(5,0,0)
+import qualified Control.Lens as L
+#endif
+
 --------------------------------------------------------------------------------
 
 -- | A list (of the right length) is isomorphic to a vector.
@@ -96,7 +99,7 @@ list = iso F.toList fromList
 
 -- | Lens on a single element.
 ix :: Fin n -> Lens' (Vec n a) a
-ix i = i `seq` lens (!i) (upd i)
+ix i = i `seq` lens (! i) (upd i)
 {-# INLINE ix #-}
 
 ----------------

@@ -68,7 +68,6 @@ import Control.Lens
          ( Iso, Iso', Lens', from, lens, iso, (&)
          , (.~)
          )
-import qualified Control.Lens as L
 import Data.Constraint (withDict, (\\))
 import Data.Constraint.Nat
          ( plusMonotone1, plusMonotone2
@@ -93,6 +92,10 @@ import Data.Fin.Int
          ( Fin, embed, fin, finToInt, unsafeFin, weaken, strengthen
          , crossFin, unembed, tryUnembed, divModFin, enumFin
          )
+
+#if !MIN_VERSION_lens(5,0,0)
+import qualified Control.Lens as L
+#endif
 
 -- | A typeclass of finite enumerable types.
 --

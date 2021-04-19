@@ -14,9 +14,11 @@
 
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+
 {-# LANGUAGE AllowAmbiguousTypes #-} -- for valueOf etc
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -72,13 +74,16 @@ import Data.Kind (Type)
 import Data.Type.Attenuation (Attenuation, coercible)
 import Data.Type.Coercion (Coercion(..))
 import GHC.Stack (HasCallStack, withFrozenCallStack)
-import GHC.Natural (naturalToInt)
 import GHC.TypeNats
          ( type (*), type (+), type (-), type (<=)
          , Nat, KnownNat, natVal'
          )
 import GHC.Exts (Proxy#, proxy#)
 import Test.QuickCheck (Arbitrary(..), arbitraryBoundedEnum)
+
+#if !MIN_VERSION_base(4,15,0)
+import GHC.Natural (naturalToInt)
+#endif
 
 -- We could use representation type Integer.
 -- We use Int since this is likely to be the most efficient type,
@@ -569,6 +574,6 @@ crossFin (Fin x) (Fin y) = fin (x * valueOf @n + y)
 valueOf :: forall (n :: Nat) (i :: Type) . (KnownNat n, Num i) => i
 valueOf = fromIntegral $ natVal' (proxy# :: Proxy# n)
 
--- TODO(awpr): upstream this rewrite rule into "base" in GHC/Real.hs with the
--- other similar RULES.
+#if !MIN_VERSION_base(4,15,0)
 {-# RULES "fromIntegral/Natural->Int" fromIntegral = naturalToInt #-}
+#endif

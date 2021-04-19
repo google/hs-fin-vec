@@ -22,6 +22,7 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
@@ -85,10 +86,13 @@ import GHC.ST (ST(..), runST)
 import GHC.TypeNats
     ( Nat, KnownNat, type (+), type (*)
     , SomeNat(..), natVal', someNatVal)
-import GHC.Natural (naturalToInteger, naturalToInt)
-import GHC.Integer (integerToInt)
 import Kinds.Integer (pattern Pos, plusMinusInverseL)
 import qualified Test.QuickCheck as QC
+
+#if !MIN_VERSION_base(4,15,0)
+import GHC.Natural (naturalToInteger, naturalToInt)
+import GHC.Integer (integerToInt)
+#endif
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -1446,11 +1450,14 @@ vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec snumberVal $ \i -> case i of
 valueOf :: forall (n :: Nat) (i :: Type) . (KnownNat n, Num i) => i
 valueOf = fromIntegral $ natVal' (proxy# :: Proxy# n)
 
+#if !MIN_VERSION_base(4,15,0)
+-- base-4.15.0.0 removed naturalToInt.
 {-# RULES "integerToInt . naturalToInteger => naturalToInt"
   forall a. integerToInt (naturalToInteger a) =
       let !(I# i) = naturalToInt a
       in i
   #-}
+#endif
 
 -- | Modify the given index of a 'Vec'.
 overIx :: Fin n -> (a -> a) -> Vec n a -> Vec n a
