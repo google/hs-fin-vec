@@ -73,9 +73,7 @@ import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
 import Data.Proxy (Proxy)
 import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
-import Data.SNumber (SNumber(..), snumberVal, reifySNumberAsNat, divExact)
-import qualified Data.SNumber as S
-import Data.Type.Equality (gcastWith)
+import Data.SInt (SInt(SI#, unSInt), reifySInt, sintVal, subSIntL, divSIntR)
 import GHC.Exts (Int(I#), Proxy#, State#, SmallMutableArray#, SmallArray#,
     cloneSmallArray#, copySmallArray#, indexSmallArray#, newSmallArray#,
     sizeofSmallArray#, thawSmallArray#, unsafeFreezeSmallArray#,
@@ -85,8 +83,8 @@ import GHC.Stack (HasCallStack)
 import GHC.ST (ST(..), runST)
 import GHC.TypeNats
     ( Nat, KnownNat, type (+), type (*)
-    , SomeNat(..), natVal', someNatVal)
-import Kinds.Integer (pattern Pos, plusMinusInverseL)
+    , SomeNat(..), natVal', someNatVal
+    )
 import qualified Test.QuickCheck as QC
 
 #if !MIN_VERSION_base(4,15,0)
@@ -97,14 +95,8 @@ import GHC.Integer (integerToInt)
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- | A convenience alias for the form of 'SNumber' we use here.
---
--- This provides both a type-level 'Nat' and a trusted runtime value for it,
--- represented as an 'Int'.
-type SInt n = SNumber Int ('Pos n)
-
 foldrEnumFin :: SInt n -> (Fin n -> a -> a) -> a -> a
-foldrEnumFin (N# x) c n = go 0
+foldrEnumFin (SI# x) c n = go 0
  where
    go i
      | i == x = n
@@ -116,7 +108,7 @@ forMFin_ n f = foldrEnumFin n (\i rest -> f i *> rest) (pure ())
 {-# INLINE forMFin_ #-}
 
 foldMapFin :: Monoid m => SInt n -> (Fin n -> (# m #)) -> m
-foldMapFin (N# n) f = go 0 mempty
+foldMapFin (SI# n) f = go 0 mempty
  where
   go i acc
     | i == n = acc
@@ -223,7 +215,7 @@ data MutableVec (s :: Type) (n :: Nat) (a :: Type)
     = MV# (SmallMutableArray# s a)
 
 newMV :: SInt n -> a -> ST s (MutableVec s n a)
-newMV (N# n) = unsafeNewMV n
+newMV (SI# n) = unsafeNewMV n
 {-# INLINE newMV #-}
 
 -- TODO(b/109668129): We should be able to replace most of the remaining
@@ -291,7 +283,7 @@ unsafeCopyVec (V# src) (I# srcOff) (MV# dst) (I# dstOff) (I# len) =
 -- (because the offset argument is just 'Int'), this needs to perform runtime
 -- bounds checks to ensure memory safety.
 sliceVec :: Vec n a -> Int -> SInt m -> Vec m a
-sliceVec xs@(V# sa) off@(I# o) (N# len@(I# l)) =
+sliceVec xs@(V# sa) off@(I# o) (SI# len@(I# l)) =
     assert (0 <= off && 0 <= len && len <= vSize xs - off) $
     V# (cloneSmallArray# sa o l)
 {-# INLINE sliceVec #-}
@@ -372,12 +364,12 @@ vLength :: forall n a. KnownNat n => Vec n a -> Int
 vLength _ = nat2int @n
 {-# INLINE vLength #-}
 
--- | Return the size of a vector as 'SInt' (i.e. 'SNumber').
+-- | Return the size of a vector as 'SInt'.
 svSize :: Vec n a -> SInt n
 -- Note this strongly relies on @n@ matching the actual size of the array: if
--- it didn't, we'd be constructing an invalid 'SNumber', which manifests
+-- it didn't, we'd be constructing an invalid 'SInt', which manifests
 -- unsafety.  So, it's unsafe for a Vec to have the wrong length.
-svSize (V# sa) = N# (I# (sizeofSmallArray# sa))
+svSize (V# sa) = SI# (I# (sizeofSmallArray# sa))
 {-# INLINE svSize #-}
 
 -- | Dynamically determine the (actual) size\/length of the vector,
@@ -386,7 +378,7 @@ svSize (V# sa) = N# (I# (sizeofSmallArray# sa))
 -- @n@ of the input, see 'svSize' and 'withSize' instead. If you'd rather
 -- obtain @n@ statically, see 'vLength'.
 vSize :: Vec n a -> Int
-vSize = unSNumber . svSize
+vSize = unSInt . svSize
 {-# INLINE vSize #-}
 
 
@@ -396,7 +388,7 @@ vSize = unSNumber . svSize
 -- returning evidence that @n@ is \"known\". If you'd rather obtain @n@
 -- as a standard 'Int', see 'vSize'.
 withSize :: forall n a r . Vec n a -> (KnownNat n => r) -> r
-withSize !xs f = reifySNumberAsNat (svSize xs) f
+withSize !xs f = reifySInt (svSize xs) f
 {-# INLINE withSize #-}
 
 --------------------------------------------------------------------------------
@@ -404,12 +396,12 @@ uninitialized :: a
 uninitialized = error "Vec: uninitialized"
 {-# NOINLINE uninitialized #-}
 
--- Unsafe version of createVec, with Int instead of SNumber.  Each use
+-- Unsafe version of createVec, with Int instead of SInt.  Each use
 -- should be vetted for size == valueOf @n.  Using this rather than writing out
--- 'N#' at each call site means we have a place to insert assertions more
+-- 'SI# at each call site means we have a place to insert assertions more
 -- easily.
 unsafeCreateVec :: Int -> (forall s. MutableVec s n a -> ST s ()) -> Vec n a
-unsafeCreateVec n = createVec (N# n)
+unsafeCreateVec n = createVec (SI# n)
 {-# INLINE unsafeCreateVec #-}
 
 createVec
@@ -556,14 +548,14 @@ takeVA m (Accessor _ get) = Accessor m (\i -> get (embedPlus i))
 {-# INLINE [0] takeVA #-}
 
 dropVA :: SInt m -> Accessor (m + n) a -> Accessor n a
-dropVA m (Accessor mn get) = Accessor (N# (unSNumber mn - unSNumber m)) $
-  \i -> get (unsafeFin (finToInt i + unSNumber m))
+dropVA m (Accessor mn get) = Accessor (SI# (unSInt mn - unSInt m)) $
+  \i -> get (unsafeFin (finToInt i + unSInt m))
 {-# INLINE [0] dropVA #-}
 
 revVA :: Accessor n a -> Accessor n a
 revVA (Accessor n get) = Accessor n $ \i -> get (complementIt i)
  where
-  !nMinus1 = unSNumber n - 1
+  !nMinus1 = unSInt n - 1
 
   complementIt :: Fin n -> Fin n
   complementIt = unsafeFin . (nMinus1 -) . finToInt
@@ -573,7 +565,7 @@ rotVA :: Fin n -> Accessor n a -> Accessor n a
 rotVA (finToInt -> !o) (Accessor n get) = Accessor n $
   \(finToInt -> !i) -> get $ unsafeFin $ if i >= o then i - o else nmo + i
  where
-  !nmo = unSNumber n - o
+  !nmo = unSInt n - o
 {-# INLINE [0] rotVA #-}
 
 liftA2VA :: (a -> b -> c) -> Accessor n a -> Accessor n b -> Accessor n c
@@ -590,19 +582,19 @@ sequenceVA :: Applicative f => Accessor n (f a) -> f (Vec n a)
 sequenceVA (Accessor n get) = listVec n <$> forMFin n get
 {-# INLINE [0] sequenceVA #-}
 
--- SNumber version of 'splitFin'.  Maybe I'll change the Fin library to provide
--- an SNumber API at some point?
+-- SInt version of 'splitFin'.  Maybe I'll change the Fin library to provide
+-- an SInt API at some point?
 splitFinS :: SInt n -> Fin (n + m) -> Either (Fin n) (Fin m)
-splitFinS (N# n) (finToInt -> i)
+splitFinS (SI# n) (finToInt -> i)
   | i < n     = Left (unsafeFin i)
   | otherwise = Right (unsafeFin (i - n))
 
 addPosSInt :: SInt n -> SInt m -> SInt (n + m)
-addPosSInt (N# n) (N# m) =
+addPosSInt (SI# n) (SI# m) =
   let nm = n + m
   in  if nm < 0
         then error "addPosSInt: Int overflow"
-        else N# (n + m)
+        else SI# (n + m)
 {-# INLINE addPosSInt #-}
 
 appendVA :: Accessor n a -> Accessor m a -> Accessor (n + m) a
@@ -617,12 +609,12 @@ appendVA (Accessor n getN) (Accessor m getM) = Accessor
 -- User-facing API with fusion rules
 --------------------------------------------------------------------------------
 
--- Unsafe version of mkVec, with Int instead of SNumber.  Each use should be
--- vetted for s == valueOf @n.  Using this rather than writing out 'N#' and
+-- Unsafe version of mkVec, with Int instead of SInt.  Each use should be
+-- vetted for s == valueOf @n.  Using this rather than writing out 'SI# and
 -- 'unsafeFin' at each call site means we have a place to insert assertions
 -- more easily.
 unsafeMkVec :: Int -> (Int -> a) -> Vec n a
-unsafeMkVec n f = mkVec (N# n) $ \i -> f (finToInt i)
+unsafeMkVec n f = mkVec (SI# n) $ \i -> f (finToInt i)
 {-# INLINE unsafeMkVec #-}
 
 -- | Create a known-length vector using a pure function.
@@ -677,7 +669,7 @@ listVec n xs = createVec n $ \mv -> ($ xs) $ foldrEnumFin n
 -- | Convert a list to a vector of the same length.
 withVec :: [a] -> (forall n. KnownNat n => Vec n a -> r) -> r
 withVec xs f = case someNatVal . fromIntegral $ length xs of
-    SomeNat (_ :: Proxy n) -> f (listVec (snumberVal @('Pos n)) xs)
+    SomeNat (_ :: Proxy n) -> f (listVec (sintVal @n) xs)
 {-# INLINABLE withVec #-}
 
 
@@ -691,7 +683,7 @@ fromListN l xs
     | l == n    = listVec sn xs
     | otherwise = error $ "Vec.fromListN: " <> show l <> " /= " <> show n
     where
-    !sn@(N# n) = snumberVal
+    !sn@(SI# n) = sintVal
 {-# INLINABLE fromListN #-}
 
 
@@ -704,7 +696,7 @@ fromList xs
     | n `eqLength` xs = listVec sn xs
     | otherwise       = error $ "Vec.fromList: length /= " <> show n
     where
-    !sn@(N# n) = snumberVal
+    !sn@(SI# n) = sintVal
 {-# INLINABLE fromList #-}
 
 
@@ -793,7 +785,7 @@ instance forall a n. (QC.Arbitrary a, KnownNat n) => QC.Arbitrary (Vec n a)
     -- how 'Gen' works under the hood, the benefit doesn't seem worth it.
     arbitrary = listVec sn <$> QC.vectorOf n QC.arbitrary
       where
-        !sn@(N# n) = snumberVal
+        !sn@(SI# n) = sintVal
 
     -- If @a@ admits too many ways to shrink, we might prefer to
     -- interleave the @shrink(xs!i)@ lists, rather than concatenating
@@ -905,7 +897,7 @@ instance Apply (Vec n) where
   {-# INLINE liftF2 #-}
 
 instance KnownNat n => Applicative (Vec n) where
-  pure = pureVec snumberVal
+  pure = pureVec sintVal
   {-# INLINE pure #-}
 
   liftA2 = liftA2Vec
@@ -973,7 +965,7 @@ instance Foldable (Vec n) where
             | i < 0 = acc
             | otherwise =
                 case get (unsafeFin i) of (# x #) -> go (i - 1) (f x acc)
-      in  go (unSNumber n - 1) acc0
+      in  go (unSInt n - 1) acc0
     {-# INLINE foldr' #-}
 
     foldl f acc0 = \v ->
@@ -981,11 +973,11 @@ instance Foldable (Vec n) where
           go !i
             | i < 0 = acc0
             | otherwise = case get (unsafeFin i) of (# x #) -> f (go (i - 1)) x
-      in  go (unSNumber n - 1)
+      in  go (unSInt n - 1)
     {-# INLINE foldl #-}
 
     foldl' f acc0 = \v ->
-      let !(Accessor (unSNumber -> !n) get) = access v
+      let !(Accessor (unSInt -> !n) get) = access v
           go !i !acc
             | i >= n = acc
             | otherwise =
@@ -995,7 +987,7 @@ instance Foldable (Vec n) where
 
     foldr1 f = \v ->
       case access v of
-        Accessor (subtract 1 . unSNumber -> lMinus1) get
+        Accessor (subtract 1 . unSInt -> lMinus1) get
           | lMinus1 < 0 -> error "foldr1@Vec: empty list"
           | otherwise ->
               let !(# z #) = get (unsafeFin lMinus1)
@@ -1008,7 +1000,7 @@ instance Foldable (Vec n) where
 
     foldl1 f = \v ->
       case access v of
-        Accessor (subtract 1 . unSNumber -> lMinus1) get
+        Accessor (subtract 1 . unSInt -> lMinus1) get
           | lMinus1 < 0 -> error "foldl1@Vec: empty list"
           | otherwise ->
               let !(# z #) = get (unsafeFin (0 :: Int))
@@ -1109,7 +1101,7 @@ instance KnownNat n => Distributive (Vec n) where
 instance KnownNat n => Representable (Vec n) where
     type Rep (Vec n) = Fin n
 
-    tabulate = tabulateVec snumberVal
+    tabulate = tabulateVec sintVal
     {-# INLINE tabulate #-}
 
     index = (!)
@@ -1118,7 +1110,7 @@ instance KnownNat n => Representable (Vec n) where
 -- | 'Prelude.scanl', for 'Vec'.
 vscanl :: KnownNat (1 + n) => (b -> a -> b) -> b -> Vec n a -> Vec (1 + n) b
 -- TODO(awpr): we can probably subject the input Vec to fusion here.
-vscanl f b = listVec snumberVal . scanl f b . F.toList
+vscanl f b = listVec sintVal . scanl f b . F.toList
 
 
 --------------------------------------------------------------------------------
@@ -1133,7 +1125,7 @@ nil :: Vec 0 a
 -- that builds it.  This blocks fusion, but we have another trick: rewrite any
 -- materialize @0 to nil.  Then anything that would've fused with this will no
 -- longer reference it at all.
-nil = mkVec snumberVal (\i -> i `seq` error "Vec.nil: the impossible happened")
+nil = mkVec sintVal (\i -> i `seq` error "Vec.nil: the impossible happened")
 {-# NOINLINE nil #-}
 
 {-# RULES
@@ -1197,8 +1189,8 @@ take_ m xs = sliceVec xs 0 m
 -- with different types.
 drop_ :: forall m n a. SInt m -> Vec (m + n) a -> Vec n a
 drop_ m xs =
-  sliceVec xs (unSNumber m) $
-  gcastWith (plusMinusInverseL @m @n) (svSize xs `S.chkSub` m)
+  sliceVec xs (unSInt m) $
+  svSize xs `subSIntL` m
 {-# NOINLINE drop_ #-}
 -- TODO(awpr): as with 'take_', casts are causing trouble here.  Consider
 -- messing with the type signature to avoid them.
@@ -1238,9 +1230,9 @@ concat xs =
 -- | Turn a vector into a vector of vector by chunking it.
 reshape :: SInt m -> Vec (n * m) a -> Vec n (Vec m a)
 reshape m =
-  let !m' = unSNumber m
+  let !m' = unSInt m
   in  \xs ->
-        mkVec (svSize xs `divExact` m) (\i -> sliceVec xs (finToInt i * m') m)
+        mkVec (svSize xs `divSIntR` m) (\i -> sliceVec xs (finToInt i * m') m)
 {-# INLINE reshape #-}
 
 -- | Map each element of a 'Vec' to a (same-sized) sub-'Vec' of the result.
@@ -1254,16 +1246,16 @@ concatMap f = concat . fmap f
 -- > toList (Vec.iterate @n f z) === take (valueOf @n) (Prelude.iterate f z)
 iterate :: forall n a. KnownNat n => (a -> a) -> a -> Vec n a
 iterate f z =
-    createVec snumberVal $ \mv ->
-       foldMFin_ snumberVal (\x i -> f x <$ writeMV mv i x) z
+    createVec sintVal $ \mv ->
+       foldMFin_ sintVal (\x i -> f x <$ writeMV mv i x) z
 {-# INLINE iterate #-}
 
 
 -- | A strict version of 'iterate'.
 iterate' :: forall n a. KnownNat n => (a -> a) -> a -> Vec n a
 iterate' f !z =
-    createVec snumberVal $ \mv ->
-        foldMFin_ snumberVal (\x i -> f x <$ (writeMV mv i $! x)) z
+    createVec sintVal $ \mv ->
+        foldMFin_ sintVal (\x i -> f x <$ (writeMV mv i $! x)) z
 {-# INLINE iterate' #-}
 
 
@@ -1295,7 +1287,7 @@ rot o = \v -> materialize (rotVA o (access v))
 
 -- | Return a vector with all elements of the type in ascending order.
 viota :: KnownNat n => Vec n (Fin n)
-viota = mkVec snumberVal id
+viota = mkVec sintVal id
 {-# INLINE viota #-}
 
 -- | One variant of the cross product of two vectors.
@@ -1392,7 +1384,7 @@ vec1 = pure
 
 -- | Create a 'Vec' from two elements.
 vec2 :: a -> a -> Vec 2 a
-vec2 x0 x1 = mkVec snumberVal $ \i -> case i of
+vec2 x0 x1 = mkVec sintVal $ \i -> case i of
   0 -> x0
   1 -> x1
   _ -> error "Impossible: Fin out of range"
@@ -1400,7 +1392,7 @@ vec2 x0 x1 = mkVec snumberVal $ \i -> case i of
 
 -- | Create a 'Vec' from three elements.
 vec3 :: a -> a -> a -> Vec 3 a
-vec3 x0 x1 x2 = mkVec snumberVal $ \i -> case i of
+vec3 x0 x1 x2 = mkVec sintVal $ \i -> case i of
   0 -> x0
   1 -> x1
   2 -> x2
@@ -1409,7 +1401,7 @@ vec3 x0 x1 x2 = mkVec snumberVal $ \i -> case i of
 
 -- | Create a 'Vec' from four elements.
 vec4 :: a -> a -> a -> a -> Vec 4 a
-vec4 x0 x1 x2 x3 = mkVec snumberVal $ \i -> case i of
+vec4 x0 x1 x2 x3 = mkVec sintVal $ \i -> case i of
   0 -> x0
   1 -> x1
   2 -> x2
@@ -1419,7 +1411,7 @@ vec4 x0 x1 x2 x3 = mkVec snumberVal $ \i -> case i of
 
 -- | Create a 'Vec' from six elements.
 vec6 :: a -> a -> a -> a -> a -> a ->Vec 6 a
-vec6 x0 x1 x2 x3 x4 x5 = mkVec snumberVal $ \i -> case i of
+vec6 x0 x1 x2 x3 x4 x5 = mkVec sintVal $ \i -> case i of
   0 -> x0
   1 -> x1
   2 -> x2
@@ -1431,7 +1423,7 @@ vec6 x0 x1 x2 x3 x4 x5 = mkVec snumberVal $ \i -> case i of
 
 -- | Create a 'Vec' from eight elements.
 vec8 :: a -> a -> a -> a -> a -> a -> a -> a -> Vec 8 a
-vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec snumberVal $ \i -> case i of
+vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec sintVal $ \i -> case i of
   0 -> x0
   1 -> x1
   2 -> x2

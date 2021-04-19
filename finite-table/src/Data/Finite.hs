@@ -79,11 +79,10 @@ import Data.Functor.Rep
          , tabulated
          )
 import Data.Serialize (Serialize(..))
-import Data.SNumber
-         ( SNumber, KnownSNumber, snumberVal, unSNumber
-         , chkAdd, chkMul, reifySNumberAsNat
+import Data.SInt
+         ( SInt(unSInt), sintVal
+         , addSInt, mulSInt, reifySInt
          )
-import Kinds.Integer (pattern Pos)
 
 import Data.Vec.Short (Vec)
 import qualified Data.Vec.Short as V
@@ -113,7 +112,7 @@ import qualified Control.Lens as L
 -- actually represent in a 'Fin'.  Another obstacle is that their cardinality
 -- varies between implementations and architectures; it's possible to work
 -- around this by making their Cardinality an irreducible type family
--- application, and using 'Data.SNumber.N#' to plug in a value at runtime, but
+-- application, and using 'Data.SInt.SI#' to plug in a value at runtime, but
 -- this makes the 'Fin's related to 'Int' and 'Word' annoying to work with,
 -- since their bound is only known at runtime.
 --
@@ -131,20 +130,20 @@ class Finite a where
   -- arithmetic on 'KnownNat' instances in expression context; that is, we
   -- can't convince GHC that an instance with
   -- @type Cardinality (Maybe a) = Cardinality a + 1@ is valid if the
-  -- 'KnownNat' is in the class context.  Instead, we use 'SNumber' to allow
+  -- 'KnownNat' is in the class context.  Instead, we use 'SInt' to allow
   -- computing the cardinality at runtime.
-  cardinality :: SNumber Int ('Pos (Cardinality a))
+  cardinality :: SInt (Cardinality a)
   default cardinality
-    :: KnownSNumber Int ('Pos (Cardinality a))
-    => SNumber Int ('Pos (Cardinality a))
-  cardinality = snumberVal
+    :: KnownNat (Cardinality a)
+    => SInt (Cardinality a)
+  cardinality = sintVal
 
   toFin :: a -> Fin (Cardinality a)
   fromFin :: Fin (Cardinality a) -> a
 
 -- | Generate a list containing every value of @a@.
 enumerate :: forall a. Finite a => [a]
-enumerate = reifySNumberAsNat (cardinality @a) (fromFin <$> enumFin)
+enumerate = reifySInt (cardinality @a) (fromFin <$> enumFin)
 
 -- | Implement 'toFin' by 'fromEnum'.
 --
@@ -253,21 +252,21 @@ instance Finite a => Finite (Min a) where
 
 instance Finite a => Finite (Maybe a) where
   type Cardinality (Maybe a) = Cardinality a + 1
-  cardinality = cardinality @a `chkAdd` snumberVal @('Pos 1)
+  cardinality = cardinality @a `addSInt` sintVal
   toFin =
-    reifySNumberAsNat (cardinality @(Maybe a)) $
+    reifySInt (cardinality @(Maybe a)) $
     withDict (zeroLe @(Cardinality a)) $
     maybe maxBound (weaken . toFin)
     \\ plusMonotone1 @0 @(Cardinality a) @1
-  fromFin = reifySNumberAsNat (cardinality @a) $ fmap fromFin . strengthen
+  fromFin = reifySInt (cardinality @a) $ fmap fromFin . strengthen
 
 instance (Finite a, Finite b) => Finite (Either a b) where
   type Cardinality (Either a b) = Cardinality a + Cardinality b
-  cardinality = cardinality @a `chkAdd` cardinality @b
+  cardinality = cardinality @a `addSInt` cardinality @b
 
   toFin =
-    reifySNumberAsNat (cardinality @a) $
-    reifySNumberAsNat (cardinality @(Either a b)) $
+    reifySInt (cardinality @a) $
+    reifySInt (cardinality @(Either a b)) $
     either
       (embed . toFin)
       ((+ fromIntegral (natVal @(Cardinality a) Proxy)) . embed . toFin)
@@ -275,26 +274,26 @@ instance (Finite a, Finite b) => Finite (Either a b) where
     \\ plusMonotone1 @0 @(Cardinality a) @(Cardinality b)
 
   fromFin x =
-    reifySNumberAsNat (cardinality @a) $
-    reifySNumberAsNat (cardinality @b) $
-    reifySNumberAsNat (cardinality @(Either a b)) $
+    reifySInt (cardinality @a) $
+    reifySInt (cardinality @b) $
+    reifySInt (cardinality @(Either a b)) $
     case tryUnembed x of
       Just xl -> Left $ fromFin xl
       Nothing -> Right $ fromFin $ unembed $
-        x - fromIntegral (unSNumber (cardinality @a))
+        x - fromIntegral (unSInt (cardinality @a))
 
 instance (Finite a, Finite b) => Finite (a, b) where
   type Cardinality (a, b) = Cardinality a * Cardinality b
-  cardinality = cardinality @a `chkMul` cardinality @b
+  cardinality = cardinality @a `mulSInt` cardinality @b
 
   toFin (a, b) =
-    reifySNumberAsNat (cardinality @(a, b)) $
-    reifySNumberAsNat (cardinality @b) $
+    reifySInt (cardinality @(a, b)) $
+    reifySInt (cardinality @b) $
     crossFin (toFin a) (toFin b)
 
   fromFin f =
-    reifySNumberAsNat (cardinality @a) $
-    reifySNumberAsNat (cardinality @b) $
+    reifySInt (cardinality @a) $
+    reifySInt (cardinality @b) $
     let (fa, fb) = divModFin f
     in  (fromFin fa, fromFin fb)
 
@@ -321,7 +320,7 @@ instance NFData a => NFData (Table k a) where
   rnf (Table vec) = rnf vec
 
 instance (Finite k, Serialize a) => Serialize (Table k a) where
-  get = reifySNumberAsNat (cardinality @k) $ sequenceA $ tabulate (const get)
+  get = reifySInt (cardinality @k) $ sequenceA $ tabulate (const get)
   put = traverse_ put
 
 deriving instance KnownNat (Cardinality a) => Applicative (Table a)
@@ -338,13 +337,13 @@ instance Finite a => Traversable (Table a) where
 
 instance Finite a => Distributive (Table a) where
   collect f fa =
-    reifySNumberAsNat (cardinality @a) $
+    reifySInt (cardinality @a) $
     let fgb = f <$> fa
     in  Table $ V.mkVec (\i -> flip index (fromFin i) <$> fgb)
 
 instance Finite a => Representable (Table a) where
   type Rep (Table a) = a
-  tabulate f = reifySNumberAsNat (cardinality @a) $ Table $ V.mkVec (f . fromFin)
+  tabulate f = reifySInt (cardinality @a) $ Table $ V.mkVec (f . fromFin)
   index (Table vec) i = vec V.! toFin i
 
 instance Finite a => FunctorWithIndex a (Table a) where imap = imapRep
@@ -372,7 +371,7 @@ traverseRep
   :: forall x a b f
    . (Finite x, Applicative f)
   => (a -> f b) -> (x -> a) -> f (x -> b)
-traverseRep f = reifySNumberAsNat (cardinality @x) $
+traverseRep f = reifySInt (cardinality @x) $
   fmap index . traverse f . tabulate @(Table _)
 
 -- | Memoize a function by using a 'Vec' as a lazy lookup table.

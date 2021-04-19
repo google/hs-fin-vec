@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: finite-table
+name: sint
 version: 0.1.0.0
 category: Data
-synopsis: Types isomorphic to Fin, and Tables indexed by them.
+synopsis: A singleton type for `Nat` represented as `Int`.
 description: |
-    This provides a class `Finite` for types isomorphic to some `Fin n`, and
-    uses it to implement array-backed total maps (`Table`s) indexed by them.
+    This package implements a type `SInt` that links a runtime `Int` with a
+    type-level `Nat`, along with some arithmetic and reflection capabilities.
+
+    This is useful when mixing type-level `Nat`s with GHC array primitives that
+    expect `Int`s as sizes and indices.
+
+    See the module intro of `Data.SInt` for more details.
 license: Apache-2.0
 author: Andrew Pritchard <awpr@google.com>
-copyright: 2017-2021 Google LLC
+copyright: 2021 Google LLC
 maintainer: Andrew Pritchard <awpr@google.com>
-github: google/hs-fin-vec/finite-table
+github: google/hs-fin-vec/sint
 
 extra-source-files:
   CHANGELOG.md
@@ -31,20 +36,9 @@ extra-source-files:
 ghc-options: -Wall -Werror
 
 dependencies:
-  - adjunctions >= 4.4 && < 4.5
   - base >= 4.12 && < 4.16
-  - cereal >= 0.5 && < 0.6
-  - constraints >= 0.9 && < 0.14
-  - distributive >= 0.1 && < 0.7
-  - data-default-class >= 0.0 && < 0.2
-  - deepseq >= 1.1 && < 1.5
-  - fin-int >= 0.1 && < 0.2
-  - indexed-traversable >= 0.1 && < 0.2
-  - lens >= 4.15 && < 5.1
-  - sint >= 0.1 && < 0.2
-  - short-vec >= 0.1 && < 0.2
 
 library:
   source-dirs: src
   exposed-modules:
-    - Data.Finite
+    - Data.SInt

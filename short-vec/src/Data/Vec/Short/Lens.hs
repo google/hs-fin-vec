@@ -72,7 +72,7 @@ import Control.Lens (Iso, Lens', iso, lens, from, swapped)
 import Data.Fin.Int (Fin, complementFin, finToInt)
 import qualified Data.Foldable as F
 import Data.Functor.Rep (ifoldMapRep, itraverseRep)
-import Data.SNumber (snumberVal)
+import Data.SInt (sintVal)
 import GHC.ST (runST)
 import GHC.TypeLits(KnownNat, type (+), type (<=), type (-))
 import qualified GHC.TypeLits
@@ -124,13 +124,13 @@ midElem = unsafeIxElem (`quot` 2)
 -- | An isomorphism with a 'split' vector.
 chopped :: (KnownNat m) => Iso (Vec (m + n) a)    (Vec (o + p) b)
                                (Vec m a, Vec n a) (Vec o b, Vec p b)
-chopped = iso (split snumberVal) (uncurry (++))
+chopped = iso (split sintVal) (uncurry (++))
 
 -- | A vector can be split (isomorphically) into a vector of vectors.
 subVecs :: (KnownNat m, (n GHC.TypeLits.* m) ~ nm, (p GHC.TypeLits.* o) ~ po)
         => Iso (Vec nm a)        (Vec po b)
                (Vec n (Vec m a)) (Vec p (Vec o b))
-subVecs = iso (reshape snumberVal) concat
+subVecs = iso (reshape sintVal) concat
 
 -- | A vector is isomorphic to its reversal.
 reversed :: Iso (Vec n a) (Vec m b)
@@ -176,9 +176,9 @@ sliced (finToInt -> !start) = lens getf setf
     !end  = start + m
     !rest = n - end -- the length of the post-slice portion of the vector
 
-    getf xs    = sliceVec xs start snumberVal
+    getf xs    = sliceVec xs start sintVal
     setf xs ys =
-        createVec snumberVal $ \mv -> do
+        createVec sintVal $ \mv -> do
             unsafeCopyVec xs 0   mv 0     start
             unsafeCopyVec ys 0   mv start m
             unsafeCopyVec xs end mv end   rest
@@ -213,7 +213,7 @@ vdiagonal = lens getf setf
 
     setf :: Vec n (Vec n a) -> Vec n a -> Vec n (Vec n a)
     setf m d =
-        mkVec snumberVal $ \i ->
+        mkVec sintVal $ \i ->
             indexK m i $ \mi ->
             indexK d i $ \di ->
             runST $ do

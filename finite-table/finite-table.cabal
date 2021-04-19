@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d82053010c0073c7196a99a7df0854a5b0525f3634a4bee7fa0fab8df14ed07f
+-- hash: f3b0adc5614652415c62f338c975137209c4ca4dbfa9ca85e0ee8f690c7d44f0
 
 name:           finite-table
 version:        0.1.0.0
@@ -46,7 +46,6 @@ library
     , fin-int >=0.1 && <0.2
     , indexed-traversable >=0.1 && <0.2
     , lens >=4.15 && <5.1
-    , numeric-kinds >=0.1 && <0.2
     , short-vec >=0.1 && <0.2
-    , snumber >=0.1 && <0.2
+    , sint >=0.1 && <0.2
   default-language: Haskell2010

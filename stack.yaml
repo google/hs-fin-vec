@@ -15,6 +15,7 @@
 resolver: lts-17.9
 
 packages:
+- sint
 - fin-int
 - short-vec
 - finite-table
@@ -22,9 +23,4 @@ packages:
 extra-deps:
 - github: google/hs-attenuation
   commit: 3243f2586e5908a09fdd0c5ee32b0adc72271fc4
-- github: google/hs-dependent-literals
-  commit: 5507063f0c4227e02d00ee70b77941cc78b96649
-  subdirs:
-    - numeric-kinds
-    - snumber
 - gauge-0.2.5

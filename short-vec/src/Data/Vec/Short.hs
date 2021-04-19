@@ -74,14 +74,14 @@ import Prelude hiding (concatMap, concat, iterate, (++))
 import GHC.TypeNats (KnownNat, type (+), type (*))
 
 import Data.Fin.Int (Fin)
-import Data.SNumber (snumberVal)
+import Data.SInt (sintVal)
 
 import Data.Vec.Short.Internal hiding
   ( backpermute, mkVec, mkVec', split, reshape
   )
 import qualified Data.Vec.Short.Internal as V
 
--- This module exposes API shims using KnownNat to quarantine SNumber inside of
+-- This module exposes API shims using KnownNat to quarantine SInt inside of
 -- the data_vec package (for now; we may export both APIs in the future).
 
 -- | Create a known-length vector using a pure function.
@@ -90,25 +90,25 @@ import qualified Data.Vec.Short.Internal as V
 -- a 'Vec' of the desired length, you can use 'withSize' to get the 'KnownNat'
 -- instance.
 mkVec :: KnownNat n => (Fin n -> a) -> Vec n a
-mkVec = V.mkVec snumberVal
+mkVec = V.mkVec sintVal
 {-# INLINE mkVec #-}
 
 -- | Create a known-length vector using a pure function, strictly.
 mkVec' :: KnownNat n => (Fin n -> a) -> Vec n a
-mkVec' = V.mkVec' snumberVal
+mkVec' = V.mkVec' sintVal
 {-# INLINE mkVec' #-}
 
 -- | Create a 'Vec' by selecting indices of another 'Vec'.
 backpermute :: KnownNat m => (Fin m -> Fin n) -> Vec n a -> Vec m a
-backpermute = V.backpermute snumberVal
+backpermute = V.backpermute sintVal
 {-# INLINE backpermute #-}
 
 -- | Split a 'Vec' into two at a given offset.
 split :: KnownNat m => Vec (m + n) a -> (Vec m a, Vec n a)
-split = V.split snumberVal
+split = V.split sintVal
 {-# INLINE split #-}
 
 -- | Split a 'Vec' into a 'Vec' of equal-sized chunks.
 reshape :: KnownNat m => Vec (n * m) a -> Vec n (Vec m a)
-reshape = V.reshape snumberVal
+reshape = V.reshape sintVal
 {-# INLINE reshape #-}
