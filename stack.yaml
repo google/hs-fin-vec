@@ -17,6 +17,7 @@ resolver: lts-17.9
 packages:
 - fin-int
 - short-vec
+- finite-table
 
 extra-deps:
 - github: google/hs-attenuation
