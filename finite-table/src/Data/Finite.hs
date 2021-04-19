@@ -96,9 +96,8 @@ import Data.Fin.Int
 
 -- | A typeclass of finite enumerable types.
 --
--- These allow constructing 'Representable' Functors out using a simple 'Vec'
--- as the underlying storage, with constant-time lookup and efficient
--- traversals.
+-- These allow constructing 'Representable' Functors using a simple 'Vec' as
+-- the underlying storage, with constant-time lookup and efficient traversals.
 --
 -- Note that since 'Fin' is (currently) represented by 'Int', any type with
 -- more values than 'Int' can't have an instance.  This means we can't have
@@ -111,7 +110,7 @@ import Data.Fin.Int
 -- actually represent in a 'Fin'.  Another obstacle is that their cardinality
 -- varies between implementations and architectures; it's possible to work
 -- around this by making their Cardinality an irreducible type family
--- application, and using 'unsafeMkSNat' to plug in a value at runtime, but
+-- application, and using 'Data.SNumber.N#' to plug in a value at runtime, but
 -- this makes the 'Fin's related to 'Int' and 'Word' annoying to work with,
 -- since their bound is only known at runtime.
 --
@@ -129,7 +128,7 @@ class Finite a where
   -- arithmetic on 'KnownNat' instances in expression context; that is, we
   -- can't convince GHC that an instance with
   -- @type Cardinality (Maybe a) = Cardinality a + 1@ is valid if the
-  -- 'KnownNat' is in the class context.  Instead, we use 'Dict' to allow
+  -- 'KnownNat' is in the class context.  Instead, we use 'SNumber' to allow
   -- computing the cardinality at runtime.
   cardinality :: SNumber Int ('Pos (Cardinality a))
   default cardinality
@@ -140,6 +139,7 @@ class Finite a where
   toFin :: a -> Fin (Cardinality a)
   fromFin :: Fin (Cardinality a) -> a
 
+-- | Generate a list containing every value of @a@.
 enumerate :: forall a. Finite a => [a]
 enumerate = reifySNumberAsNat (cardinality @a) (fromFin <$> enumFin)
 
@@ -306,6 +306,7 @@ instance Finite Void where
   toFin = absurd
   fromFin !_ = error "Unreachable: x :: Fin 0 must have been bottom."
 
+-- | An 'Iso' between @a@ and the corresponding 'Fin' type, as per 'Finite'.
 asFin :: Finite a => Iso' a (Fin (Cardinality a))
 asFin = iso toFin fromFin
 
@@ -325,7 +326,7 @@ deriving instance KnownNat (Cardinality a) => Applicative (Table a)
 instance (KnownNat (Cardinality a), Default b) => Default (Table a b) where
   def = Table (pure def)
 
--- | 'lmap' for a constrained 'Profunctor' on 'Table'.
+-- | 'Data.Profunctor.lmap' for a constrained 'Data.Profunctor.Profunctor'.
 lmapTable :: (Finite b, Finite c) => (b -> c) -> Table c a -> Table b a
 lmapTable f t = tabulate $ \x -> t `index` f x
 
@@ -376,7 +377,7 @@ traverseRep f = reifySNumberAsNat (cardinality @x) $
 -- Given a function whose argument is a 'Finite' type, return a new function
 -- that looks up the argument in a table constructed by applying the original
 -- function to every possible value.  Since 'Vec' stores its elements boxed,
--- none of the applications of 'f' in the table are forced until they're forced
+-- none of the applications of @f@ in the table are forced until they're forced
 -- by calling the memoized function and forcing the result.
 memoize :: Finite a => (a -> b) -> a -> b
 memoize = index . tabulate @(Table _)
