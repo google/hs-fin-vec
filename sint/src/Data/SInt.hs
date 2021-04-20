@@ -39,7 +39,9 @@
 
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoStarIsType #-}
@@ -74,6 +76,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 -- | A singleton type linking a runtime 'Int' and a type-level 'Nat'.
 newtype SInt (n :: Nat) = MkSInt Int
+  deriving newtype Show
 
 -- We must take care to prevent 'SInt's from being coerced across @n@.
 type role SInt nominal
