@@ -54,7 +54,7 @@
 {-# LANGUAGE UnboxedTuples #-}
 
 module Data.SInt
-         ( SInt(SI#, unSInt), trySIntVal, sintVal, reifySInt
+         ( SInt(SI#, unSInt), trySIntVal, sintVal, reifySInt, withSInt
          , addSInt, subSInt, subSIntL, mulSInt, divSIntL, divSIntR
          ) where
 
@@ -89,6 +89,12 @@ type role SInt nominal
 pattern SI# :: Int -> SInt n
 pattern SI# {unSInt} = MkSInt unSInt
 {-# COMPLETE SI# #-}
+
+-- | Use an 'Int' as an existentially-quantified 'SInt'.
+withSInt :: HasCallStack => Int -> (forall n. SInt n -> r) -> r
+withSInt n f
+  | n < 0     = error "withSInt: negative value"
+  | otherwise = f (SI# n)
 
 -- | Produce an 'SInt' for a given 'KnownNat', or 'Nothing' if out of range.
 trySIntVal :: forall n. KnownNat n => Maybe (SInt n)
