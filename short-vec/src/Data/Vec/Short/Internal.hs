@@ -28,6 +28,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RoleAnnotations #-}
@@ -66,9 +67,13 @@ import Data.Default.Class (Default(..))
 import Data.Distributive (Distributive(..))
 import Data.Fin.Int (Fin, finToInt, unsafeFin)
 import qualified Data.Foldable as F
+import Data.Foldable.WithIndex (FoldableWithIndex(..))
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
-import Data.Functor.Rep (Representable(..))
+import Data.Functor.Rep (Representable(..), ifoldMapRep, itraverseRep)
+import Data.Functor.WithIndex (FunctorWithIndex(..))
+import Data.Traversable.WithIndex (TraversableWithIndex(..))
+
 import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
 import Data.Proxy (Proxy)
@@ -849,6 +854,16 @@ instance Functor (Vec n) where
     -- potentially use the specialized form of 'pureVec'.
     x <$ v = pureVec (_aSize (access v)) x
     {-# INLINE (<$) #-}
+
+-- TODO: Implement these instances via more efficient built-in functions.
+
+instance FunctorWithIndex (Fin n) (Vec n) where imap = mapWithPos
+
+instance KnownNat n => FoldableWithIndex (Fin n) (Vec n) where
+  ifoldMap = ifoldMapRep
+
+instance KnownNat n => TraversableWithIndex (Fin n) (Vec n) where
+  itraverse = itraverseRep
 
 -- | An element-strict version of 'fmap'.
 map' :: (a -> b) -> Vec n a -> Vec n b

@@ -4,19 +4,19 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 03c432fcd10d151f37bed35c36cfd3cfebd1c44983d51df085f5596fe53bdfba
+-- hash: 616ee76c336d25453f2f31a07b5734b4fd842361daac1a196ca7d76220658a5f
 
-name:           finite-table
+name:           short-vec-lens
 version:        0.1.0.0
-synopsis:       Types isomorphic to Fin, and Tables indexed by them.
-description:    This provides a class `Finite` for types isomorphic to some `Fin n`, and
-                uses it to implement array-backed total maps (`Table`s) indexed by them.
+synopsis:       Lenses and related functionality for the `short-vec` package.
+description:    Lenses and related functionality for the `short-vec` package.
 category:       Data
 homepage:       https://github.com/google/hs-fin-vec#readme
 bug-reports:    https://github.com/google/hs-fin-vec/issues
-author:         Andrew Pritchard <awpr@google.com>
+author:         Lennart Augustsson <lennart@augustsson.net>, Wren Romano <wrengr@google.com>, Andrew Pritchard <awpr@google.com>
+
 maintainer:     Andrew Pritchard <awpr@google.com>
-copyright:      2017-2021 Google LLC
+copyright:      2018-2021 Google LLC
 license:        Apache-2.0
 build-type:     Simple
 extra-source-files:
@@ -25,28 +25,21 @@ extra-source-files:
 source-repository head
   type: git
   location: https://github.com/google/hs-fin-vec
-  subdir: finite-table
+  subdir: short-vec-lens
 
 library
   exposed-modules:
-      Data.Finite
+      Data.Vec.Short.Lens
   other-modules:
-      Paths_finite_table
+      Paths_short_vec_lens
   hs-source-dirs:
       src
   ghc-options: -Wall -Werror
   build-depends:
-      adjunctions >=4.4 && <4.5
-    , base >=4.12 && <4.16
-    , cereal >=0.5 && <0.6
-    , constraints >=0.9 && <0.14
-    , data-default-class >=0.0 && <0.2
-    , deepseq >=1.1 && <1.5
-    , distributive >=0.1 && <0.7
+      base >=4.12 && <4.16
     , fin-int >=0.1 && <0.2
     , indexed-traversable >=0.1 && <0.2
     , lens >=4.15 && <5.1
     , short-vec >=0.1 && <0.2
-    , short-vec-lens >=0.1 && <0.2
     , sint >=0.1 && <0.2
   default-language: Haskell2010

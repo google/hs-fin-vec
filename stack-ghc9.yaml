@@ -19,6 +19,7 @@ packages:
 - sint
 - fin-int
 - short-vec
+- short-vec-lens
 - finite-table
 
 extra-deps:

@@ -27,10 +27,7 @@ author: >
   Wren Romano,
   Andrew Pritchard <awpr@google.com>
 copyright: 2018-2021 Google LLC
-maintainer: >
-  Lennart Augustsson <lennart@augustsson.net>,
-  Wren Romano <wrengr@google.com>,
-  Andrew Pritchard <awpr@google.com>
+maintainer: Andrew Pritchard <awpr@google.com>
 github: google/hs-fin-vec/short-vec
 
 # Note: this causes CHANGELOG.md to be included in Hackage distributions.
@@ -47,7 +44,6 @@ dependencies:
   - distributive >= 0.1 && < 0.7
   - integer-gmp >= 0.5 && < 1.2
   - indexed-traversable >= 0.1 && < 0.2
-  - lens >= 4.15 && < 5.1
   - fin-int >= 0.1 && < 0.2
   - semigroupoids >= 1.0 && < 5.4
   - sint >= 0.1 && < 0.2
@@ -58,7 +54,6 @@ library:
   exposed-modules:
     - Data.Vec.Short
     - Data.Vec.Short.Internal
-    - Data.Vec.Short.Lens
 
 tests:
   Vec-test:
