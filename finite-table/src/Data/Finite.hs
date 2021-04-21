@@ -23,6 +23,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -50,7 +51,7 @@ import Prelude hiding ((.), id)
 import Data.Bifunctor (bimap)
 import Data.Coerce (coerce)
 import Data.Default.Class (Default(..))
-import Data.Foldable (traverse_)
+import Data.Foldable (toList, traverse_)
 import Data.Foldable.WithIndex (FoldableWithIndex(..))
 import Data.Functor.Identity (Identity)
 import Data.Functor.WithIndex (FunctorWithIndex(..))
@@ -79,6 +80,7 @@ import Data.Functor.Rep
          ( Representable(..), ifoldMapRep, imapRep, itraverseRep
          , tabulated
          )
+import Data.Portray (Portray(..), Portrayal(..))
 import Data.Serialize (Serialize(..))
 import Data.SInt (SInt, sintVal, addSInt, mulSInt, reifySInt)
 
@@ -308,6 +310,16 @@ asFin = iso toFin fromFin
 -- | A total table indexed by @a@, containing @b@s.
 newtype Table a b = Table (Vec (Cardinality a) b)
   deriving (Eq, Ord, Show, Functor, Foldable, Generic)
+
+-- | Pretty-print a Table as a 'mkTable' expression.
+--
+-- @
+--     λ> pp $ (tabulate (even . finToInt) :: Table (Fin 3) Bool )
+--     mkTable (\case { 0 -> True; 1 -> False; 2 -> True })
+-- @
+instance (Finite a, Portray a, Portray b) => Portray (Table a b) where
+  portray (Table xs) = Apply "mkTable" $ pure $ LambdaCase $
+    zipWith (\a b -> (portray a, portray b)) (enumerate @a) (toList xs)
 
 instance NFData a => NFData (Table k a) where
   rnf (Table vec) = rnf vec

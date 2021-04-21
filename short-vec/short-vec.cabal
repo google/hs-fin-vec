@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3ebf04847524bc0844dd30243b17dbcb68265c69912b1e92a1c89fdcd486e241
+-- hash: a68675d00e628b02da35d8141ca3b042d03831fc2bc23d026ca93c7ed2683897
 
 name:           short-vec
 version:        0.1.0.0
@@ -49,6 +49,7 @@ library
     , fin-int >=0.1 && <0.2
     , indexed-traversable >=0.1 && <0.2
     , integer-gmp >=0.5 && <1.2
+    , portray >=0.1 && <0.2
     , semigroupoids >=1.0 && <5.4
     , sint >=0.1 && <0.2
   default-language: Haskell2010
@@ -70,6 +71,7 @@ test-suite Vec-test
     , fin-int >=0.1 && <0.2
     , indexed-traversable >=0.1 && <0.2
     , integer-gmp >=0.5 && <1.2
+    , portray >=0.1 && <0.2
     , semigroupoids >=1.0 && <5.4
     , short-vec
     , sint >=0.1 && <0.2
@@ -95,6 +97,7 @@ benchmark Vec-benchmark
     , gauge
     , indexed-traversable >=0.1 && <0.2
     , integer-gmp >=0.5 && <1.2
+    , portray >=0.1 && <0.2
     , semigroupoids >=1.0 && <5.4
     , short-vec
     , sint >=0.1 && <0.2

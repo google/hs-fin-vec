@@ -71,6 +71,7 @@ import Data.Coerce (coerce)
 import Data.Data (Data)
 import Data.Default.Class (Default(..))
 import Data.Kind (Type)
+import Data.Portray (Portray)
 import Data.Type.Attenuation (Attenuation, coercible)
 import Data.Type.Coercion (Coercion(..))
 import GHC.Stack (HasCallStack, withFrozenCallStack)
@@ -94,18 +95,16 @@ type FinRep = Int
 -- | Naturals bounded above by @n@.
 newtype Fin (n :: Nat) = Fin FinRep
   deriving (Eq, Ord, Data)
+  -- Fin Read/Show behave like other numeric newtypes: drop the \"Fin\".
+  deriving newtype (Show, Portray)
 
 -- | Constraint synonym for naturals @n@ s.t. @'Fin' n@ is inhabited.
 type FinSize n = (KnownNat n, 1 <= n)
 
--- Fin Read/Show instances behave like other numeric newtypes: drop the \"Fin\".
-instance Show (Fin n) where
-  showsPrec p (Fin x) = showsPrec p x
-
 instance KnownNat n => Read (Fin n) where
   readsPrec p s = first finFromIntegral <$> readsPrec @Integer p s
 
-instance (FinSize n) => Arbitrary (Fin n) where
+instance FinSize n => Arbitrary (Fin n) where
     arbitrary = arbitraryBoundedEnum
 
 instance NFData (Fin n) where rnf (Fin x) = rnf x

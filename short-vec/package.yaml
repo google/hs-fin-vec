@@ -45,6 +45,7 @@ dependencies:
   - integer-gmp >= 0.5 && < 1.2
   - indexed-traversable >= 0.1 && < 0.2
   - fin-int >= 0.1 && < 0.2
+  - portray >= 0.1 && < 0.2
   - semigroupoids >= 1.0 && < 5.4
   - sint >= 0.1 && < 0.2
   - QuickCheck >= 2.5 && < 2.15

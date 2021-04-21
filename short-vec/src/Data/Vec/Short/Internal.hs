@@ -76,6 +76,7 @@ import Data.Traversable.WithIndex (TraversableWithIndex(..))
 
 import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
+import Data.Portray (Portray(..), Portrayal(..), strAtom)
 import Data.Proxy (Proxy)
 import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
 import Data.SInt (SInt(SI#, unSInt), reifySInt, sintVal, subSIntL, divSIntR)
@@ -770,6 +771,10 @@ instance (KnownNat n, Read a) => Read (Vec n a) where
 -- parantheses.
 precedence :: Int
 precedence = 10
+
+instance Portray a => Portray (Vec n a) where
+  portray xs = Apply (strAtom "fromListN")
+    [portray (vSize xs), portray $ F.toList xs]
 
 instance NFData a => NFData (Vec n a) where
     rnf !xs = foldMapFin (svSize xs) $
