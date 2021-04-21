@@ -24,9 +24,7 @@ description: |
 license: Apache-2.0
 author: Lennart Augustsson <lennart@augustsson.net>
 copyright: 2017-2021 Google LLC
-maintainer: >
-    Lennart Augustsson <lennart@augustsson.net>,
-    Andrew Pritchard <awpr@google.com>
+maintainer: Andrew Pritchard <awpr@google.com>
 github: google/hs-fin-vec/fin-int
 
 extra-source-files:

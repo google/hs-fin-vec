@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3b167a8ec80488929bbfa75b0e3378548c6fb1c093aca5a9ba55f6c119db23bb
+-- hash: 1238db0bfe53b4d9695db7f6f50310ddccd822df9f631271103ecc5eb613cb0b
 
 name:           fin-int
 version:        0.1.0.0
@@ -17,8 +17,7 @@ category:       Data
 homepage:       https://github.com/google/hs-fin-vec#readme
 bug-reports:    https://github.com/google/hs-fin-vec/issues
 author:         Lennart Augustsson <lennart@augustsson.net>
-maintainer:     Lennart Augustsson <lennart@augustsson.net>, Andrew Pritchard <awpr@google.com>
-
+maintainer:     Andrew Pritchard <awpr@google.com>
 copyright:      2017-2021 Google LLC
 license:        Apache-2.0
 build-type:     Simple
