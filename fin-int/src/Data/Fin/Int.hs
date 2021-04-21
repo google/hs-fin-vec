@@ -38,7 +38,7 @@ module Data.Fin.Int
          ( -- * Finite Natural Numbers
            Fin, FinSize
            -- * Conversion
-         , fin, knownFin, tryFin, finMod, finDivMod, finToInt
+         , fin, finFromIntegral, knownFin, tryFin, finMod, finDivMod, finToInt
            -- * Bound Manipulation
          , embed, unembed, tryUnembed
          , shiftFin, unshiftFin, splitFin
@@ -103,40 +103,30 @@ instance Show (Fin n) where
   showsPrec p (Fin x) = showsPrec p x
 
 instance KnownNat n => Read (Fin n) where
-  readsPrec p s = first fin <$> readsPrec @Integer p s
-
--- GHC seems to have a bug and does not allow HasCallStack for
--- instance declarations.
-instance ({-HasCallStack,-} KnownNat n) => Num (Fin n) where
-    (+) = chkAdd
-    (-) = chkSub
-    (*) = chkMul
-    abs x = x
-    signum 0 = 0
-    signum _ = 1
-    negate 0 = 0
-    negate _ = error $ "negate @ Fin " ++ show (valueOf @n :: Integer)
-    {-# INLINE fromInteger #-}
-    fromInteger = fin
+  readsPrec p s = first finFromIntegral <$> readsPrec @Integer p s
 
 instance (FinSize n) => Arbitrary (Fin n) where
     arbitrary = arbitraryBoundedEnum
 
 instance NFData (Fin n) where rnf (Fin x) = rnf x
 
--- | This is similar to 'fromInteger', but you get a stack trace on error.
-{-# INLINE fin #-}
-fin :: forall n a. (HasCallStack, KnownNat n, Integral a, Show a) => a -> Fin n
-fin i' | i <  0 = error $ "Fin: number out of range " ++ show i ++ " < 0"
-       | i >= n = error $ "Fin: number out of range " ++ show i ++ " >= "
-                            ++ show n
-       | otherwise = Fin i
+fin :: forall n. (HasCallStack, KnownNat n) => Int -> Fin n
+fin i
+  | i <  0 = error $ "Fin: number out of range " ++ show i ++ " < 0"
+  | i >= n = error $ "Fin: number out of range " ++ show i ++ " >= " ++ show n
+  | otherwise = Fin i
  where
   !n = valueOf @n
+
+-- | This is similar to 'fromInteger', but you get a stack trace on error.
+{-# INLINE fin #-}
+finFromIntegral
+  :: forall n a. (HasCallStack, KnownNat n, Integral a, Show a) => a -> Fin n
+finFromIntegral =
   -- We make sure to do the comparisons in a large integer type (namely FinRep)
   -- rather than something like Fin. Otherwise we'd always fail in the
   -- conversion @fin :: Fin 3 -> Fin 4@.
-  !i = fromIntegral i' :: FinRep
+  fin . fromIntegral
 
 {-# INLINE ufin #-}
 ufin :: forall n . (HasCallStack, KnownNat n) => FinRep -> Fin n
@@ -195,7 +185,7 @@ complementFin :: forall n. (KnownNat n) => Fin n -> Fin n
 -- uninhabited so x can only ever be bottom. In this case, unsafeFin will
 -- briefly create an invalid Fin, but evaluating the subtraction will end up
 -- raising the error inside of x, so an invalid Fin can never be returned.
-complementFin x = unsafeFin (valueOf @n - 1 :: FinRep) - x
+complementFin x = unsafeFin (valueOf @n - 1 - finToInt x :: FinRep)
 
 -- | This is like 'fromIntegral', but without the annoying context.
 finToInt :: Fin n -> Int
@@ -278,8 +268,8 @@ instance forall n . (KnownNat n) => Enum (Fin n) where
         | x < n - 1 = Fin (x + 1)
         | otherwise = error $ "succ @(Fin " ++ show n ++ "): no successor of " ++ show n
         where !n = valueOf @n
-    toEnum   = fromIntegral
-    fromEnum = fromIntegral
+    toEnum   = fin
+    fromEnum = finToInt
     -- See Note [Enumerations of Fins]
     enumFrom       (Fin x)                 = map coerce [x .. valueOf @n - 1]
     enumFromThen   (Fin x) (Fin y)         = map coerce [x, y .. valueOf @n - 1]
@@ -293,19 +283,6 @@ instance forall n . (KnownNat n) => Enum (Fin n) where
     {-# INLINE enumFromThen #-}
     {-# INLINE enumFromTo #-}
     {-# INLINE enumFromThenTo #-}
-
-instance (KnownNat n) => Real (Fin n) where
-    toRational (Fin i) = toRational i
-
-instance (KnownNat n) => Integral (Fin n) where
-    quotRem (Fin x) (Fin y) = case quotRem x y of
-      (q, r) -> (Fin q, Fin r)
-    divMod = quotRem -- Default definition calls 'negate', which errors.
-    div (Fin x) (Fin y) = Fin (div x y)
-    mod (Fin x) (Fin y) = Fin (mod x y)
-    quot (Fin x) (Fin y) = Fin (quot x y)
-    rem (Fin x) (Fin y) = Fin (rem x y)
-    toInteger (Fin x) = toInteger x
 
 -- XXX This should have context 1<=n, but that stops deriving from
 -- working for types containing a Fin.

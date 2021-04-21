@@ -1384,7 +1384,7 @@ vec1 = pure
 
 -- | Create a 'Vec' from two elements.
 vec2 :: a -> a -> Vec 2 a
-vec2 x0 x1 = mkVec sintVal $ \i -> case i of
+vec2 x0 x1 = mkVec sintVal $ \i -> case finToInt i of
   0 -> x0
   1 -> x1
   _ -> error "Impossible: Fin out of range"
@@ -1392,7 +1392,7 @@ vec2 x0 x1 = mkVec sintVal $ \i -> case i of
 
 -- | Create a 'Vec' from three elements.
 vec3 :: a -> a -> a -> Vec 3 a
-vec3 x0 x1 x2 = mkVec sintVal $ \i -> case i of
+vec3 x0 x1 x2 = mkVec sintVal $ \i -> case finToInt i of
   0 -> x0
   1 -> x1
   2 -> x2
@@ -1401,7 +1401,7 @@ vec3 x0 x1 x2 = mkVec sintVal $ \i -> case i of
 
 -- | Create a 'Vec' from four elements.
 vec4 :: a -> a -> a -> a -> Vec 4 a
-vec4 x0 x1 x2 x3 = mkVec sintVal $ \i -> case i of
+vec4 x0 x1 x2 x3 = mkVec sintVal $ \i -> case finToInt i of
   0 -> x0
   1 -> x1
   2 -> x2
@@ -1411,7 +1411,7 @@ vec4 x0 x1 x2 x3 = mkVec sintVal $ \i -> case i of
 
 -- | Create a 'Vec' from six elements.
 vec6 :: a -> a -> a -> a -> a -> a ->Vec 6 a
-vec6 x0 x1 x2 x3 x4 x5 = mkVec sintVal $ \i -> case i of
+vec6 x0 x1 x2 x3 x4 x5 = mkVec sintVal $ \i -> case finToInt i of
   0 -> x0
   1 -> x1
   2 -> x2
@@ -1423,7 +1423,7 @@ vec6 x0 x1 x2 x3 x4 x5 = mkVec sintVal $ \i -> case i of
 
 -- | Create a 'Vec' from eight elements.
 vec8 :: a -> a -> a -> a -> a -> a -> a -> a -> Vec 8 a
-vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec sintVal $ \i -> case i of
+vec8 x0 x1 x2 x3 x4 x5 x6 x7 = mkVec sintVal $ \i -> case finToInt i of
   0 -> x0
   1 -> x1
   2 -> x2

@@ -69,7 +69,7 @@ module Data.Vec.Short.Lens
 
 import Prelude hiding ((++), concat, concatMap, iterate)
 import Control.Lens (Iso, Lens', iso, lens, from, swapped)
-import Data.Fin.Int (Fin, complementFin, finToInt)
+import Data.Fin.Int (Fin, complementFin, fin, finToInt)
 import qualified Data.Foldable as F
 import Data.Functor.Rep (ifoldMapRep, itraverseRep)
 import Data.SInt (sintVal)
@@ -188,7 +188,7 @@ sliced (finToInt -> !start) = lens getf setf
 paired :: Iso (Vec 2 a) (Vec 2 b) (a, a) (b, b)
 paired = iso unvec2 (uncurry vec2)
     where
-    unvec2 v = indexK v 0 $ \x -> indexK v 1 $ \y -> (x,y)
+    unvec2 v = indexK v (fin 0) $ \x -> indexK v (fin 1) $ \y -> (x,y)
 
 -- | Isomorphism between a vector and a vector rotated @i@ steps.
 -- The element at index 0 in the first vector is at index @i@ in the second.

@@ -47,6 +47,7 @@ module Data.Finite
 
 import Prelude hiding ((.), id)
 
+import Data.Bifunctor (bimap)
 import Data.Coerce (coerce)
 import Data.Default.Class (Default(..))
 import Data.Foldable (traverse_)
@@ -79,17 +80,14 @@ import Data.Functor.Rep
          , tabulated
          )
 import Data.Serialize (Serialize(..))
-import Data.SInt
-         ( SInt(unSInt), sintVal
-         , addSInt, mulSInt, reifySInt
-         )
+import Data.SInt (SInt, sintVal, addSInt, mulSInt, reifySInt)
 
 import Data.Vec.Short (Vec)
 import qualified Data.Vec.Short as V
 import qualified Data.Vec.Short.Lens as V (ix)
 import Data.Fin.Int
-         ( Fin, embed, fin, finToInt, unsafeFin, weaken, strengthen
-         , crossFin, unembed, tryUnembed, divModFin, enumFin
+         ( Fin, embed, fin, finToInt, unsafeFin, weaken, strengthen, crossFin
+         , divModFin, enumFin, shiftFin, splitFin
          )
 
 #if !MIN_VERSION_lens(5,0,0)
@@ -161,7 +159,7 @@ fromFinEnum = toEnum . finToInt
 
 instance Finite () where
   type Cardinality () = 1
-  toFin _ = 0
+  toFin _ = fin 0
   fromFin _ = ()
 
 instance Finite Bool where
@@ -197,12 +195,12 @@ instance Finite Int16 where
 instance Finite Word8 where
   type Cardinality Word8 = 256
   toFin = unsafeFin . id @_ @Int . fromIntegral
-  fromFin = fromIntegral
+  fromFin = fromIntegral . finToInt
 
 instance Finite Word16 where
   type Cardinality Word16 = 65536
   toFin = unsafeFin . id @_ @Int . fromIntegral
-  fromFin = fromIntegral
+  fromFin = fromIntegral . finToInt
 
 instance Finite Ordering where
   type Cardinality Ordering = 3
@@ -267,9 +265,7 @@ instance (Finite a, Finite b) => Finite (Either a b) where
   toFin =
     reifySInt (cardinality @a) $
     reifySInt (cardinality @(Either a b)) $
-    either
-      (embed . toFin)
-      ((+ fromIntegral (natVal @(Cardinality a) Proxy)) . embed . toFin)
+    either (embed . toFin) (shiftFin . toFin)
     \\ plusMonotone2 @(Cardinality a) @0 @(Cardinality b)
     \\ plusMonotone1 @0 @(Cardinality a) @(Cardinality b)
 
@@ -277,10 +273,7 @@ instance (Finite a, Finite b) => Finite (Either a b) where
     reifySInt (cardinality @a) $
     reifySInt (cardinality @b) $
     reifySInt (cardinality @(Either a b)) $
-    case tryUnembed x of
-      Just xl -> Left $ fromFin xl
-      Nothing -> Right $ fromFin $ unembed $
-        x - fromIntegral (unSInt (cardinality @a))
+    bimap fromFin fromFin $ splitFin x
 
 instance (Finite a, Finite b) => Finite (a, b) where
   type Cardinality (a, b) = Cardinality a * Cardinality b
