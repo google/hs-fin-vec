@@ -30,8 +30,6 @@ github: google/hs-fin-vec/short-vec-lens
 extra-source-files:
   CHANGELOG.md
 
-ghc-options: -Wall -Werror
-
 dependencies:
   - base >= 4.12 && < 4.16
   - fin-int >= 0.1 && < 0.2

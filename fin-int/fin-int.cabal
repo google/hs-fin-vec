@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 17152be835c51372042977c37801eeb16f1b732ccd64ab3c515774dc0073fabf
+-- hash: 4b494fdd9feba3fe9a061665a0f106a52083fa33c11a6213c01d552df9ae0419
 
 name:           fin-int
 version:        0.1.0.0
@@ -36,7 +36,6 @@ library
       Paths_fin_int
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror
   build-depends:
       QuickCheck >=2.5 && <2.15
     , attenuation >=0.1 && <0.2

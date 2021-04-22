@@ -34,3 +34,6 @@ extra-deps:
   subdirs:
     - wrapped
 - gauge-0.2.5
+
+ghc-options:
+  "$locals": -Wall -Werror

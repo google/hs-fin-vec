@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 628288f2c28427a61e7c768478c33a4d08b7a64dfb807694dd1ddcc1d2cb8d37
+-- hash: a70c4d0609cdf14caa1bea003be110b82ad765006e0194a0e9828c0e3607b4d1
 
 name:           sint
 version:        0.1.0.0
@@ -39,7 +39,6 @@ library
       Paths_sint
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror
   build-depends:
       base >=4.12 && <4.16
   default-language: Haskell2010

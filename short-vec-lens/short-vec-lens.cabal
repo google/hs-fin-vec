@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 616ee76c336d25453f2f31a07b5734b4fd842361daac1a196ca7d76220658a5f
+-- hash: e0fcdc1b554e3267fc304c700de0a6c9dd1141027e5c8c7784b30f7cfe1cad46
 
 name:           short-vec-lens
 version:        0.1.0.0
@@ -34,7 +34,6 @@ library
       Paths_short_vec_lens
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror
   build-depends:
       base >=4.12 && <4.16
     , fin-int >=0.1 && <0.2

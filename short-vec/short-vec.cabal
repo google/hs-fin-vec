@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a68675d00e628b02da35d8141ca3b042d03831fc2bc23d026ca93c7ed2683897
+-- hash: b9be3dc65983bb7b13872dc74f65773b8bddf4c1a27e9a647114523cf8aed278
 
 name:           short-vec
 version:        0.1.0.0
@@ -38,7 +38,6 @@ library
       Paths_short_vec
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror
   build-depends:
       QuickCheck >=2.5 && <2.15
     , adjunctions >=4.4 && <4.5
@@ -59,7 +58,6 @@ test-suite Vec-test
   main-is: Tests.hs
   hs-source-dirs:
       test
-  ghc-options: -Wall -Werror
   build-depends:
       HUnit
     , QuickCheck >=2.4.0.1
@@ -85,7 +83,6 @@ benchmark Vec-benchmark
   main-is: Benchmark.hs
   hs-source-dirs:
       test
-  ghc-options: -Wall -Werror
   build-depends:
       QuickCheck >=2.5 && <2.15
     , adjunctions >=4.4 && <4.5

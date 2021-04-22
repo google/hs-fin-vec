@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eac174dbbeb502f7f076c33a8dda194ca27e86709996246d9d30b2da6ee6e586
+-- hash: f788e21ae8b92764851f312870d626e506be16abc35470156237dfc7d506ed5a
 
 name:           finite-table
 version:        0.1.0.0
@@ -34,7 +34,6 @@ library
       Paths_finite_table
   hs-source-dirs:
       src
-  ghc-options: -Wall -Werror
   build-depends:
       adjunctions >=4.4 && <4.5
     , base >=4.12 && <4.16

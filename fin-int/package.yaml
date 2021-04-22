@@ -30,8 +30,6 @@ github: google/hs-fin-vec/fin-int
 extra-source-files:
   CHANGELOG.md
 
-ghc-options: -Wall -Werror
-
 dependencies:
   - attenuation >= 0.1 && < 0.2
   - base >= 4.12 && < 4.16
