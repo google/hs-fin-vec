@@ -55,43 +55,47 @@
 -- interfaces along the way.
 --
 -- TODO(b/109668556): revisit all the inline pragmas.
+
 module Data.Vec.Short.Internal where
 
 import Prelude hiding ((++), concat, iterate)
 
 import Control.Applicative (Applicative(..))
 import Control.DeepSeq (NFData(rnf))
-import Control.Exception(assert)
+import Control.Exception (assert)
 import qualified Data.Data as D
+import qualified Data.Foldable as F
+import Data.Kind (Type)
+import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
+import Data.Proxy (Proxy)
+import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
+import GHC.Exts
+         ( Int(I#), Proxy#, State#, SmallMutableArray#, SmallArray#
+         , cloneSmallArray#, copySmallArray#, indexSmallArray#, newSmallArray#
+         , sizeofSmallArray#, thawSmallArray#, unsafeFreezeSmallArray#
+         , writeSmallArray#, proxy#, coerce
+         )
+import qualified GHC.Exts as GHC (IsList(..))
+import GHC.Stack (HasCallStack)
+import GHC.ST (ST(..), runST)
+import GHC.TypeNats
+         ( Nat, KnownNat, type (+), type (*)
+         , SomeNat(..), natVal', someNatVal
+         )
+
 import Data.Default.Class (Default(..))
 import Data.Distributive (Distributive(..))
-import Data.Fin.Int (Fin, finToInt, unsafeFin)
-import qualified Data.Foldable as F
 import Data.Foldable.WithIndex (FoldableWithIndex(..))
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
 import Data.Functor.Rep (Representable(..), ifoldMapRep, itraverseRep)
 import Data.Functor.WithIndex (FunctorWithIndex(..))
-import Data.Traversable.WithIndex (TraversableWithIndex(..))
-
-import Data.Kind (Type)
-import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
 import Data.Portray (Portray(..), Portrayal(..), strAtom)
-import Data.Proxy (Proxy)
-import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
-import Data.SInt (SInt(SI#, unSInt), reifySInt, sintVal, subSIntL, divSIntR)
-import GHC.Exts (Int(I#), Proxy#, State#, SmallMutableArray#, SmallArray#,
-    cloneSmallArray#, copySmallArray#, indexSmallArray#, newSmallArray#,
-    sizeofSmallArray#, thawSmallArray#, unsafeFreezeSmallArray#,
-    writeSmallArray#, proxy#, coerce)
-import qualified GHC.Exts as GHC (IsList(..))
-import GHC.Stack (HasCallStack)
-import GHC.ST (ST(..), runST)
-import GHC.TypeNats
-    ( Nat, KnownNat, type (+), type (*)
-    , SomeNat(..), natVal', someNatVal
-    )
+import Data.Traversable.WithIndex (TraversableWithIndex(..))
 import qualified Test.QuickCheck as QC
+
+import Data.Fin.Int (Fin, finToInt, unsafeFin)
+import Data.SInt (SInt(SI#, unSInt), reifySInt, sintVal, subSIntL, divSIntR)
 
 #if !MIN_VERSION_base(4,15,0)
 import GHC.Natural (naturalToInteger, naturalToInt)

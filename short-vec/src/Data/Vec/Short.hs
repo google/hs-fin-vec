@@ -21,53 +21,53 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Data.Vec.Short
-  ( Vec
-  -- * Core constructors\/generators
-  -- ** 'Fin'-based constructors
-  , mkVec, mkVec'
-  , backpermute
-  -- ** List-based constructors
-  , fromList, fromListN, withVec
-  -- ** Arity-based constructors
-  , vec1, vec2, vec3, vec4, vec6, vec8
-  -- ** 'Enum'-based constructors
-  , viota
+         ( Vec
+         -- * Core constructors\/generators
+         -- ** 'Fin'-based constructors
+         , mkVec, mkVec'
+         , backpermute
+         -- ** List-based constructors
+         , fromList, fromListN, withVec
+         -- ** Arity-based constructors
+         , vec1, vec2, vec3, vec4, vec6, vec8
+         -- ** 'Enum'-based constructors
+         , viota
 
-  -- * Core operators
-  -- ** Size\/length
-  , vLength, vSize, withSize
-  -- ** Indexing
-  , (!), indexK
-  -- ** Add/remove element
-  , insert, remove, overIx
+         -- * Core operators
+         -- ** Size\/length
+         , vLength, vSize, withSize
+         -- ** Indexing
+         , (!), indexK
+         -- ** Add/remove element
+         , insert, remove, overIx
 
-  -- * List-like operators
-  -- ** Constructor views
-  -- *** The nil view
-  , nil
-  -- ** Operator views
-  -- *** The append view
-  , (++), split
-  -- *** The concat view
-  , concat, concatMap, reshape
-  -- *** The reverse view
-  , rev, rot
-  -- *** The transposition view
-  , vtranspose
-  -- ** Misc list-like operators
-  , iterate, iterate'
-  , vsort, vsortBy, vsortOn
-  , vfindIndex
+         -- * List-like operators
+         -- ** Constructor views
+         -- *** The nil view
+         , nil
+         -- ** Operator views
+         -- *** The append view
+         , (++), split
+         -- *** The concat view
+         , concat, concatMap, reshape
+         -- *** The reverse view
+         , rev, rot
+         -- *** The transposition view
+         , vtranspose
+         -- ** Misc list-like operators
+         , iterate, iterate'
+         , vsort, vsortBy, vsortOn
+         , vfindIndex
 
-  -- * Additional zips, maps, folds, etc.
-  , map', mapWithPos, mapWithPos', withPos
-  , cross
-  , toListWithPos, foldrWithPos
-  , traversePos_, forPos_
-  , traverseWithPos_, forVecWithPos_
-  , vscanl
-  , liftA2Lazy
-  ) where
+         -- * Additional zips, maps, folds, etc.
+         , map', mapWithPos, mapWithPos', withPos
+         , cross
+         , toListWithPos, foldrWithPos
+         , traversePos_, forPos_
+         , traverseWithPos_, forVecWithPos_
+         , vscanl
+         , liftA2Lazy
+         ) where
 
 import Prelude hiding (concatMap, concat, iterate, (++))
 
@@ -77,8 +77,8 @@ import Data.Fin.Int (Fin)
 import Data.SInt (sintVal)
 
 import Data.Vec.Short.Internal hiding
-  ( backpermute, mkVec, mkVec', split, reshape
-  )
+         ( backpermute, mkVec, mkVec', split, reshape
+         )
 import qualified Data.Vec.Short.Internal as V
 
 -- This module exposes API shims using KnownNat to quarantine SInt inside of

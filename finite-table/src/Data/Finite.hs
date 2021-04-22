@@ -50,15 +50,11 @@ import Prelude hiding ((.), id)
 
 import Data.Bifunctor (bimap)
 import Data.Coerce (coerce)
-import Data.Default.Class (Default(..))
 import Data.Foldable (toList, traverse_)
-import Data.Foldable.WithIndex (FoldableWithIndex(..))
 import Data.Functor.Identity (Identity)
-import Data.Functor.WithIndex (FunctorWithIndex(..))
 import Data.Int (Int8, Int16)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup (WrappedMonoid, Min, Max, First, Last)
-import Data.Traversable.WithIndex (TraversableWithIndex(..))
 import Data.Void (Void, absurd)
 import Data.Word (Word8, Word16)
 import Control.Category (Category(..))
@@ -75,14 +71,18 @@ import Data.Constraint.Nat
          ( plusMonotone1, plusMonotone2
          , zeroLe
          )
+import Data.Default.Class (Default(..))
 import Data.Distributive (Distributive(..))
+import Data.Foldable.WithIndex (FoldableWithIndex(..))
 import Data.Functor.Rep
          ( Representable(..), ifoldMapRep, imapRep, itraverseRep
          , tabulated
          )
+import Data.Functor.WithIndex (FunctorWithIndex(..))
 import Data.Portray (Portray(..), Portrayal(..))
 import Data.Serialize (Serialize(..))
 import Data.SInt (SInt, sintVal, addSInt, mulSInt, reifySInt)
+import Data.Traversable.WithIndex (TraversableWithIndex(..))
 
 import Data.Vec.Short (Vec)
 import qualified Data.Vec.Short as V

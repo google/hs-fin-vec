@@ -68,14 +68,16 @@ module Data.Vec.Short.Lens
     ) where
 
 import Prelude hiding ((++), concat, concatMap, iterate)
-import Control.Lens (Iso, Lens', iso, lens, from, swapped)
-import Data.Fin.Int (Fin, complementFin, fin, finToInt)
+
 import qualified Data.Foldable as F
-import Data.SInt (sintVal)
 import GHC.ST (runST)
-import GHC.TypeLits(KnownNat, type (+), type (<=), type (-))
+import GHC.TypeLits (KnownNat, type (+), type (<=), type (-))
 import qualified GHC.TypeLits
 
+import Control.Lens (Iso, Lens', iso, lens, from, swapped)
+
+import Data.Fin.Int (Fin, complementFin, fin, finToInt)
+import Data.SInt (sintVal)
 import Data.Vec.Short.Internal
 
 #if !MIN_VERSION_lens(5,0,0)
