@@ -1,0 +1,40 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+resolver: lts-16.31
+
+packages:
+- sint
+- fin-int
+- short-vec
+- short-vec-lens
+- finite-table
+
+extra-deps:
+- github: google/hs-attenuation
+  commit: 6d9292cc0eaa549821d556405658500e35e9b166
+- github: google/hs-portray
+  commit: 9a2b5f283cde4f80cfc44c3fcf0131b89120e862
+  subdirs:
+    - portray
+    - portray-pretty
+- github: google/hs-wrapped
+  commit: e6d3131dda318173009b5158312ecb6c9db5c35d
+  subdirs:
+    - wrapped
+- gauge-0.2.5
+- indexed-traversable-0.1.1
+
+ghc-options:
+  "$locals": -Wall -Werror
