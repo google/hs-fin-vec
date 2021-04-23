@@ -36,9 +36,11 @@ dependencies:
   - data-default-class >= 0.0 && < 0.2
   - deepseq >= 1.1 && < 1.5
   - portray >= 0.1 && < 0.2
+  - sint >= 0.1 && < 0.2
   - QuickCheck >= 2.5 && < 2.15
 
 library:
   source-dirs: src
   exposed-modules:
     - Data.Fin.Int
+    - Data.Fin.Int.Explicit

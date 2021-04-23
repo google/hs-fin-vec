@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4b494fdd9feba3fe9a061665a0f106a52083fa33c11a6213c01d552df9ae0419
+-- hash: f3c0378d70dd139e8d56d10d55f15632af5f878c61820b4ed12aa32a939f9114
 
 name:           fin-int
 version:        0.1.0.0
@@ -32,6 +32,7 @@ source-repository head
 library
   exposed-modules:
       Data.Fin.Int
+      Data.Fin.Int.Explicit
   other-modules:
       Paths_fin_int
   hs-source-dirs:
@@ -43,4 +44,5 @@ library
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5
     , portray >=0.1 && <0.2
+    , sint >=0.1 && <0.2
   default-language: Haskell2010
