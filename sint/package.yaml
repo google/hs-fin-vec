@@ -40,3 +40,13 @@ library:
   source-dirs: src
   exposed-modules:
     - Data.SInt
+
+tests:
+  SInt-test:
+    source-dirs: test
+    main: Main.hs
+    dependencies:
+      - sint
+      - test-framework
+      - test-framework-quickcheck2
+      - QuickCheck

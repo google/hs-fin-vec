@@ -55,7 +55,7 @@
 
 module Data.SInt
          ( SInt(SI#, unSInt), trySIntVal, sintVal, reifySInt, withSInt
-         , addSInt, subSInt, subSIntL, mulSInt, divSIntL, divSIntR
+         , addSInt, subSInt, subSIntLE, subSIntL, mulSInt, divSIntL, divSIntR
          ) where
 
 import Data.Proxy (Proxy(..))
@@ -127,15 +127,21 @@ mulSInt (SI# m@(I# m')) (SI# n@(I# n')) =
    case mulIntMayOflo# m' n' of
      ovf
        | I# ovf == 0 -> SI# mn
-       | fromIntegral mn == mnNat -> SI# mn
+       | mn > 0 && fromIntegral mn == mnNat -> SI# mn
        | otherwise -> error $ "Nat " ++ show mnNat ++ " out of range for Int."
  where
   mn = m * n
   mnNat = fromIntegral m * fromIntegral n :: Natural
 
 -- | Subtract two 'SInt's, using an inequality constraint to rule out overflow.
-subSInt :: n <= m => SInt m -> SInt n -> SInt (m - n)
-subSInt (SI# m) (SI# n) = SI# (m - n)
+subSInt :: HasCallStack => SInt m -> SInt n -> SInt (m - n)
+subSInt (SI# m) (SI# n)
+  | n > m = error $ "Nat " ++ show (m - n) ++ " out of range."
+  | otherwise = SI# (m - n)
+
+-- | Subtract two 'SInt's, using an inequality constraint to rule out overflow.
+subSIntLE :: n <= m => SInt m -> SInt n -> SInt (m - n)
+subSIntLE (SI# m) (SI# n) = SI# (m - n)
 
 -- | "Un-add" an 'SInt' from another 'SInt', on the left.
 --
