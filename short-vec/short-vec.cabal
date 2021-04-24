@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b9be3dc65983bb7b13872dc74f65773b8bddf4c1a27e9a647114523cf8aed278
+-- hash: 16ceaf440fbbe7b6d22e33d54b0e598305a090b65960bfbc053d0983e768a111
 
 name:           short-vec
 version:        0.1.0.0
@@ -33,6 +33,7 @@ source-repository head
 library
   exposed-modules:
       Data.Vec.Short
+      Data.Vec.Short.Explicit
       Data.Vec.Short.Internal
   other-modules:
       Paths_short_vec

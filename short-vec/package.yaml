@@ -52,6 +52,7 @@ library:
   source-dirs: src
   exposed-modules:
     - Data.Vec.Short
+    - Data.Vec.Short.Explicit
     - Data.Vec.Short.Internal
 
 tests:
