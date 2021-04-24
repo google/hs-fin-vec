@@ -327,7 +327,7 @@ instance (Finite a, Portray a, Diff b) => Diff (Table a b) where
   diff (Table xs) (Table ys) =
     if hasDiff
       then Just $ Apply "mkTable" $ pure $ LambdaCase $
-             (if allDiff then id else (++ [("_", "=")])) $
+             (if allDiff then id else (++ [("_", "_")])) $
              catMaybes labeledDiffs
       else Nothing
    where
