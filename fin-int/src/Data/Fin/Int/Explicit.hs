@@ -73,6 +73,7 @@ import GHC.TypeNats
 
 import Data.Default.Class (Default(..))
 import Data.Portray (Portray)
+import Data.Portray.Diff (Diff)
 import Data.Type.Attenuation (Attenuation, coercible)
 import Test.QuickCheck (Arbitrary(..), arbitraryBoundedEnum)
 
@@ -88,7 +89,7 @@ type FinRep = Int
 newtype Fin (n :: Nat) = Fin FinRep
   deriving (Eq, Ord, Data)
   -- Fin Read/Show behave like other numeric newtypes: drop the \"Fin\".
-  deriving newtype (Show, Portray)
+  deriving newtype (Show, Portray, Diff)
 
 -- | Constraint synonym for naturals @n@ s.t. @'Fin' n@ is inhabited.
 type FinSize n = (KnownNat n, 1 <= n)

@@ -35,6 +35,8 @@ extra-source-files:
 
 dependencies:
   - base >= 4.12 && < 4.16
+  - portray >= 0.1 && < 0.2
+  - portray-diff >= 0.1 && < 0.2
 
 library:
   source-dirs: src

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f788e21ae8b92764851f312870d626e506be16abc35470156237dfc7d506ed5a
+-- hash: 88c9ddce38fde3f18892fda1414e8961225eb7c23536a8819d32cde61b9c2912
 
 name:           finite-table
 version:        0.1.0.0
@@ -46,6 +46,7 @@ library
     , indexed-traversable >=0.1 && <0.2
     , lens >=4.15 && <5.1
     , portray >=0.1 && <0.2
+    , portray-diff >=0.1 && <0.2
     , short-vec >=0.1 && <0.2
     , short-vec-lens >=0.1 && <0.2
     , sint >=0.1 && <0.2

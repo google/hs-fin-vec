@@ -53,8 +53,9 @@ import Data.Coerce (coerce)
 import Data.Foldable (toList, traverse_)
 import Data.Functor.Identity (Identity)
 import Data.Int (Int8, Int16)
+import Data.Maybe (catMaybes, isJust)
 import Data.Proxy (Proxy(..))
-import Data.Semigroup (WrappedMonoid, Min, Max, First, Last)
+import Data.Semigroup (WrappedMonoid, Min, Max, First, Last, Any(..), All(..))
 import Data.Void (Void, absurd)
 import Data.Word (Word8, Word16)
 import Control.Category (Category(..))
@@ -80,6 +81,7 @@ import Data.Functor.Rep
          )
 import Data.Functor.WithIndex (FunctorWithIndex(..))
 import Data.Portray (Portray(..), Portrayal(..))
+import Data.Portray.Diff (Diff(..))
 import Data.Serialize (Serialize(..))
 import Data.SInt (SInt, sintVal, addSInt, mulSInt, reifySInt)
 import Data.Traversable.WithIndex (TraversableWithIndex(..))
@@ -320,6 +322,23 @@ newtype Table a b = Table (Vec (Cardinality a) b)
 instance (Finite a, Portray a, Portray b) => Portray (Table a b) where
   portray (Table xs) = Apply "mkTable" $ pure $ LambdaCase $
     zipWith (\a b -> (portray a, portray b)) (enumerate @a) (toList xs)
+
+instance (Finite a, Portray a, Diff b) => Diff (Table a b) where
+  diff (Table xs) (Table ys) =
+    if hasDiff
+      then Just $ Apply "mkTable" $ pure $ LambdaCase $
+             (if allDiff then id else (++ [("_", "=")])) $
+             catMaybes labeledDiffs
+      else Nothing
+   where
+    (Any hasDiff, All allDiff) = foldMap
+      (\x -> (Any (isJust x), All (isJust x)))
+      labeledDiffs
+    labeledDiffs = zipWith3
+      (\a x y -> sequenceA (portray a, diff x y))
+      (enumerate @a)
+      (toList xs)
+      (toList ys)
 
 instance NFData a => NFData (Table k a) where
   rnf (Table vec) = rnf vec

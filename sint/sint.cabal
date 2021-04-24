@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8fb1bdfc7da917da87b067a154ad97a521b31d42910fbdedcc059f18a6b91e25
+-- hash: fa3f3771aa2a33113dccb260de9cc176d0136ebfb93e37383db5354413d72df5
 
 name:           sint
 version:        0.1.0.0
@@ -41,6 +41,8 @@ library
       src
   build-depends:
       base >=4.12 && <4.16
+    , portray >=0.1 && <0.2
+    , portray-diff >=0.1 && <0.2
   default-language: Haskell2010
 
 test-suite SInt-test
@@ -53,6 +55,8 @@ test-suite SInt-test
   build-depends:
       QuickCheck
     , base >=4.12 && <4.16
+    , portray >=0.1 && <0.2
+    , portray-diff >=0.1 && <0.2
     , sint
     , test-framework
     , test-framework-quickcheck2

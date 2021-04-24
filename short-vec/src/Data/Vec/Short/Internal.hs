@@ -65,6 +65,8 @@ import Control.DeepSeq (NFData(rnf))
 import Control.Exception (assert)
 import qualified Data.Data as D
 import qualified Data.Foldable as F
+import Data.Function (on)
+import Data.Functor ((<&>))
 import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
 import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
@@ -88,6 +90,7 @@ import Data.Functor.Rep (Representable(..))
 import Data.Functor.WithIndex (FunctorWithIndex)
 import qualified Data.Functor.WithIndex as X (imap)
 import Data.Portray (Portray(..), Portrayal(..), strAtom)
+import Data.Portray.Diff (Diff(..))
 import Data.Traversable.WithIndex (TraversableWithIndex(..))
 import qualified Test.QuickCheck as QC
 
@@ -741,6 +744,10 @@ precedence = 10
 instance Portray a => Portray (Vec n a) where
   portray xs = Apply (strAtom "fromListN")
     [portray (vSize xs), portray $ F.toList xs]
+
+instance (Portray a, Diff a) => Diff (Vec n a) where
+  diff x y = (diff `on` F.toList) x y <&>
+    \d -> Apply (strAtom "fromListN") [portray (vSize x), d]
 
 instance NFData a => NFData (Vec n a) where
     rnf !xs = foldMapFin (svSize xs) $

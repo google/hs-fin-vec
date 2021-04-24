@@ -67,6 +67,9 @@ import GHC.TypeNats
          )
 import Numeric.Natural (Natural)
 
+import Data.Portray (Portray)
+import Data.Portray.Diff (Diff)
+
 #if MIN_VERSION_base(4,15,0)
 import Unsafe.Coerce (unsafeEqualityProof, UnsafeEquality(..))
 #else
@@ -76,7 +79,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 -- | A singleton type linking a runtime 'Int' and a type-level 'Nat'.
 newtype SInt (n :: Nat) = MkSInt Int
-  deriving newtype Show
+  deriving newtype (Show, Portray, Diff)
 
 -- We must take care to prevent 'SInt's from being coerced across @n@.
 type role SInt nominal

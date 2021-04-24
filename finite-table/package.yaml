@@ -40,6 +40,7 @@ dependencies:
   - indexed-traversable >= 0.1 && < 0.2
   - lens >= 4.15 && < 5.1
   - portray >= 0.1 && < 0.2
+  - portray-diff >= 0.1 && < 0.2
   - sint >= 0.1 && < 0.2
   - short-vec >= 0.1 && < 0.2
   - short-vec-lens >= 0.1 && < 0.2
