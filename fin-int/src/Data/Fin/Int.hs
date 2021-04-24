@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-{-# LANGUAGE AllowAmbiguousTypes #-} -- for valueOf etc
+{-# LANGUAGE AllowAmbiguousTypes #-} -- for knownFin
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}

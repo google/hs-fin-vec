@@ -76,8 +76,8 @@ import qualified GHC.TypeLits
 
 import Control.Lens (Iso, Lens', iso, lens, from, swapped)
 
-import Data.Fin.Int (Fin, complementFin, fin, finToInt)
-import Data.SInt (sintVal)
+import Data.Fin.Int.Explicit (Fin, complementFin, finToInt, unsafeFin)
+import Data.SInt (sintVal, unSInt)
 import Data.Vec.Short.Internal
 
 #if !MIN_VERSION_lens(5,0,0)
@@ -93,7 +93,7 @@ import Data.Traversable.WithIndex (TraversableWithIndex(..))
 -- The list-to-vector direction is partial.
 list :: (KnownNat n) => Iso (Vec n a) (Vec n b)
                             [a]       [b]
-list = iso F.toList fromList
+list = iso F.toList (fromList sintVal)
 
 --------------------------------------------------------------------------------
 
@@ -171,8 +171,8 @@ sliced
     -> Lens' (Vec n a) (Vec m a)
 sliced (finToInt -> !start) = lens getf setf
     where
-    !m    = nat2int @m
-    !n    = nat2int @n
+    !m    = unSInt @m sintVal
+    !n    = unSInt @n sintVal
     !end  = start + m
     !rest = n - end -- the length of the post-slice portion of the vector
 
@@ -188,20 +188,22 @@ sliced (finToInt -> !start) = lens getf setf
 paired :: Iso (Vec 2 a) (Vec 2 b) (a, a) (b, b)
 paired = iso unvec2 (uncurry vec2)
     where
-    unvec2 v = indexK v (fin 0) $ \x -> indexK v (fin 1) $ \y -> (x,y)
+    unvec2 v =
+      indexK v (unsafeFin @Int 0) $ \x ->
+      indexK v (unsafeFin @Int 1) $ \y -> (x,y)
 
 -- | Isomorphism between a vector and a vector rotated @i@ steps.
 -- The element at index 0 in the first vector is at index @i@ in the second.
 -- E.g., @view (rotated 1) (fromList "ABCD") == fromList "DABC"@
 rotated :: forall n a b. Fin n -> Iso (Vec n a) (Vec n b) (Vec n a) (Vec n b)
-rotated i = iso (rot i) (\v -> rot (withSize v (complementFin i)) v)
+rotated i = iso (rot i) (\v -> rot (complementFin (svSize v) i) v)
 {-# INLINE rotated #-}
 
 -- | Isomorphism of transposed vectors.
 vtransposed :: (KnownNat m, KnownNat p)
             => Iso (Vec n (Vec m a)) (Vec p (Vec o b))
                    (Vec m (Vec n a)) (Vec o (Vec p b))
-vtransposed = iso vtranspose vtranspose
+vtransposed = iso (vtranspose sintVal) (vtranspose sintVal)
 
 -- TODO: KnownNat not needed.
 -- | Lens on the main diagonal.

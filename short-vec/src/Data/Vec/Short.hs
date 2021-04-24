@@ -17,7 +17,11 @@
 -- The underlying implementation uses the 'GHC.Exts.SmallArray#' primitive,
 -- which is best-suited for short vectors (less than a few hundred elements).
 
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Data.Vec.Short
@@ -27,7 +31,7 @@ module Data.Vec.Short
          , mkVec, mkVec'
          , backpermute
          -- ** List-based constructors
-         , fromList, fromListN, withVec
+         , fromList, withVec
          -- ** Arity-based constructors
          , vec1, vec2, vec3, vec4, vec6, vec8
          -- ** 'Enum'-based constructors
@@ -35,7 +39,7 @@ module Data.Vec.Short
 
          -- * Core operators
          -- ** Size\/length
-         , vLength, vSize, withSize
+         , svSize, vLength, vSize, withSize
          -- ** Indexing
          , (!), indexK
          -- ** Add/remove element
@@ -72,12 +76,14 @@ module Data.Vec.Short
 import Prelude hiding (concatMap, concat, iterate, (++))
 
 import GHC.TypeNats (KnownNat, type (+), type (*))
+import GHC.Stack (HasCallStack)
 
 import Data.Fin.Int (Fin)
-import Data.SInt (sintVal)
+import Data.SInt (sintVal, unSInt, reifySInt)
 
 import Data.Vec.Short.Internal hiding
-         ( backpermute, mkVec, mkVec', split, reshape
+         ( backpermute, mkVec, mkVec', split, reshape, vtranspose
+         , iterate, iterate', fromList, viota, liftA2Lazy
          )
 import qualified Data.Vec.Short.Internal as V
 
@@ -103,6 +109,19 @@ backpermute :: KnownNat m => (Fin m -> Fin n) -> Vec n a -> Vec m a
 backpermute = V.backpermute sintVal
 {-# INLINE backpermute #-}
 
+-- | Convert a list to a vector, throwing an error if the list has the
+-- wrong length.
+-- Note: Because this walks @xs@ to check its length, this cannot be
+-- used with the list fusion optimization rules.
+fromList :: (HasCallStack, KnownNat n) => [a] -> Vec n a
+fromList = V.fromList sintVal
+{-# INLINE fromList #-}
+
+-- | Return a vector with all elements of the type in ascending order.
+viota :: KnownNat n => Vec n (Fin n)
+viota = V.viota sintVal
+{-# INLINE viota #-}
+
 -- | Split a 'Vec' into two at a given offset.
 split :: KnownNat m => Vec (m + n) a -> (Vec m a, Vec n a)
 split = V.split sintVal
@@ -112,3 +131,40 @@ split = V.split sintVal
 reshape :: KnownNat m => Vec (n * m) a -> Vec n (Vec m a)
 reshape = V.reshape sintVal
 {-# INLINE reshape #-}
+
+vtranspose :: KnownNat m => Vec n (Vec m a) -> Vec m (Vec n a)
+vtranspose = V.vtranspose sintVal
+{-# INLINE vtranspose #-}
+
+-- | Statically determine the (purported) size\/length of the vector.
+-- If you'd rather not require the 'KnownNat' constraint, see 'vSize'.
+vLength :: forall n a. KnownNat n => Vec n a -> Int
+vLength _ = unSInt @n sintVal
+{-# INLINE vLength #-}
+
+-- | Generate a Vec by repeated application of a function.
+--
+-- > toList (Vec.iterate @n f z) === take (valueOf @n) (Prelude.iterate f z)
+iterate :: KnownNat n => (a -> a) -> a -> Vec n a
+iterate = V.iterate sintVal
+{-# INLINE iterate #-}
+
+-- | A strict version of 'iterate'.
+iterate' :: KnownNat n => (a -> a) -> a -> Vec n a
+iterate' = V.iterate' sintVal
+{-# INLINE iterate' #-}
+
+-- | A truly lazy version of @liftA2@.
+--
+-- As opposed to the actual @liftA2@ it does not inspect the arguments which
+-- makes it possible it to use in code that has lazy knot-tying.
+liftA2Lazy :: KnownNat n => (a -> b -> c) -> Vec n a -> Vec n b -> Vec n c
+liftA2Lazy = V.liftA2Lazy sintVal
+{-# INLINE liftA2Lazy #-}
+
+-- | Dynamically determine the (actual) size\/length of the vector,
+-- returning evidence that @n@ is \"known\". If you'd rather obtain @n@
+-- as a standard 'Int', see 'vSize'.
+withSize :: forall n a r . Vec n a -> (KnownNat n => r) -> r
+withSize !xs f = reifySInt (svSize xs) f
+{-# INLINE withSize #-}

@@ -67,7 +67,6 @@ import qualified Data.Data as D
 import qualified Data.Foldable as F
 import Data.Kind (Type)
 import qualified Data.List as L (sort, sortBy, sortOn, findIndex)
-import Data.Proxy (Proxy)
 import Data.Semigroup (All(..), Any(..), Sum(..), Product(..))
 import GHC.Exts
          ( Int(I#), Proxy#, State#, SmallMutableArray#, SmallArray#
@@ -78,10 +77,7 @@ import GHC.Exts
 import qualified GHC.Exts as GHC (IsList(..))
 import GHC.Stack (HasCallStack)
 import GHC.ST (ST(..), runST)
-import GHC.TypeNats
-         ( Nat, KnownNat, type (+), type (*)
-         , SomeNat(..), natVal', someNatVal
-         )
+import GHC.TypeNats (Nat, KnownNat, type (+), type (*), natVal')
 
 import Data.Default.Class (Default(..))
 import Data.Distributive (Distributive(..))
@@ -95,7 +91,7 @@ import Data.Traversable.WithIndex (TraversableWithIndex(..))
 import qualified Test.QuickCheck as QC
 
 import Data.Fin.Int (Fin, finToInt, unsafeFin)
-import Data.SInt (SInt(SI#, unSInt), reifySInt, sintVal, subSIntL, divSIntR)
+import Data.SInt (SInt(SI#, unSInt), sintVal, subSIntL, divSIntR, withSInt, addSInt)
 
 #if !MIN_VERSION_base(4,15,0)
 import GHC.Natural (naturalToInteger, naturalToInt)
@@ -106,10 +102,10 @@ import GHC.Integer (integerToInt)
 --------------------------------------------------------------------------------
 
 foldrEnumFin :: SInt n -> (Fin n -> a -> a) -> a -> a
-foldrEnumFin (SI# x) c n = go 0
+foldrEnumFin sn c n = go 0
  where
    go i
-     | i == x = n
+     | i == unSInt sn = n
      | otherwise = c (unsafeFin i) (go (i + 1))
 {-# INLINE [0] foldrEnumFin #-}
 
@@ -118,10 +114,10 @@ forMFin_ n f = foldrEnumFin n (\i rest -> f i *> rest) (pure ())
 {-# INLINE forMFin_ #-}
 
 foldMapFin :: Monoid m => SInt n -> (Fin n -> (# m #)) -> m
-foldMapFin (SI# n) f = go 0 mempty
+foldMapFin sn f = go 0 mempty
  where
   go i acc
-    | i == n = acc
+    | i == unSInt sn = acc
     | otherwise = case f (unsafeFin i) of (# x #) -> go (i + 1) (acc <> x)
 {-# INLINE foldMapFin #-}
 
@@ -162,7 +158,7 @@ prim_ f = ST $ \s0 -> case f s0 of s1 -> (# s1, () #)
 -- 'sizeofSmallArray#'; which in turn invalidates all the safety and
 -- correctness guarantees we assumed we could rely on those type-indices
 -- to provide.
---
+
 -- [Note MemoryUnsafe]: There are two sorts of memory unsafety introduced
 -- by GHC's primops. First is the usual index-out-of-bounds unsafety.
 -- In the functions defined here, this sort of unsafety only leaks out as
@@ -172,27 +168,6 @@ prim_ f = ST $ \s0 -> case f s0 of s1 -> (# s1, () #)
 -- freeze\/thaw arrays in place, they allow a term which holds the
 -- 'MutableVec' view to make mutations which are then visible to terms
 -- holding the 'Vec' view, thereby violating the purity of Haskell.
-
-
--- | The particular instance of 'GHC.TypeNats.natVal' or 'valueOf' that we want
--- pretty much everywhere.
---
--- TODO(b/109668374): 'valueOf' ends up calling 'fromIntegral' in ways
--- that can overflow 'Int' and lead to /memory-unsafety/. For now,
--- we make sure to use 'nat2int' everywhere (in lieu of 'valueOf'),
--- just in case we end up wanting to fix 'nat2int' or change its type
--- without doing the same to 'valueOf' (for some strange reason).
-nat2int :: forall n. KnownNat n => Int
-nat2int = valueOf @n
-{-# INLINE nat2int #-}
--- /Developer's Note/: We don't use the more obvious\/direct
--- @nat2int = fromInteger . natVal@ definition, because GHC-8.2.1
--- introduces a regression over GHC-8.0.2 whereby 'natVal' calls aren't
--- simplified. <https://ghc.haskell.org/trac/ghc/ticket/14532>  Thus,
--- 'valueOf' goes through an intermediate newtype in order to be able to
--- state a bunch of rewrite rules to manually force 'natVal' to simplify
--- (for an enumerated set of small @n@s).
-
 
 -- Without these annotations GHC will infer that the @n@ parameter is
 -- phantom, which opens the door to bugs by allowing folks to coerce it
@@ -368,12 +343,6 @@ indexK :: Vec n a -> Fin n -> (a -> r) -> r
 indexK v i k = case fetch v i of (# x #) -> k x
 {-# INLINE indexK #-}
 
--- | Statically determine the (purported) size\/length of the vector.
--- If you'd rather not require the 'KnownNat' constraint, see 'vSize'.
-vLength :: forall n a. KnownNat n => Vec n a -> Int
-vLength _ = nat2int @n
-{-# INLINE vLength #-}
-
 -- | Return the size of a vector as 'SInt'.
 svSize :: Vec n a -> SInt n
 -- Note this strongly relies on @n@ matching the actual size of the array: if
@@ -391,15 +360,6 @@ vSize :: Vec n a -> Int
 vSize = unSInt . svSize
 {-# INLINE vSize #-}
 
-
---------------------------------------------------------------------------------
-
--- | Dynamically determine the (actual) size\/length of the vector,
--- returning evidence that @n@ is \"known\". If you'd rather obtain @n@
--- as a standard 'Int', see 'vSize'.
-withSize :: forall n a r . Vec n a -> (KnownNat n => r) -> r
-withSize !xs f = reifySInt (svSize xs) f
-{-# INLINE withSize #-}
 
 --------------------------------------------------------------------------------
 uninitialized :: a
@@ -677,23 +637,21 @@ listVec n xs = createVec n $ \mv -> ($ xs) $ foldrEnumFin n
 
 
 -- | Convert a list to a vector of the same length.
-withVec :: [a] -> (forall n. KnownNat n => Vec n a -> r) -> r
-withVec xs f = case someNatVal . fromIntegral $ length xs of
-    SomeNat (_ :: Proxy n) -> f (listVec (sintVal @n) xs)
+withVec :: [a] -> (forall n. Vec n a -> r) -> r
+withVec xs f = withSInt (length xs) $ \sn -> f (listVec sn xs)
 {-# INLINABLE withVec #-}
-
 
 -- | Convert a list to a vector, given a hint for the length of the list.
 -- If the hint does not match the actual length of the list, then the
 -- behavior of this function is left unspecified. If the hint does not
 -- match the desired @n@, then we throw an error just like 'fromList'.
 -- For a non-errorful version, see 'withVec' instead.
-fromListN :: forall n a. (HasCallStack, KnownNat n) => Int -> [a] -> Vec n a
-fromListN l xs
+fromListN :: HasCallStack => SInt n -> Int -> [a] -> Vec n a
+fromListN sn l xs
     | l == n    = listVec sn xs
     | otherwise = error $ "Vec.fromListN: " <> show l <> " /= " <> show n
     where
-    !sn@(SI# n) = sintVal
+    !n = unSInt sn
 {-# INLINABLE fromListN #-}
 
 
@@ -701,12 +659,12 @@ fromListN l xs
 -- wrong length.
 -- Note: Because this walks @xs@ to check its length, this cannot be
 -- used with the list fusion optimization rules.
-fromList :: forall n a. (HasCallStack, KnownNat n) => [a] -> Vec n a
-fromList xs
+fromList :: HasCallStack => SInt n -> [a] -> Vec n a
+fromList sn xs
     | n `eqLength` xs = listVec sn xs
     | otherwise       = error $ "Vec.fromList: length /= " <> show n
     where
-    !sn@(SI# n) = sintVal
+    !n = unSInt sn
 {-# INLINABLE fromList #-}
 
 
@@ -724,8 +682,8 @@ eqLength n (_:xs) = eqLength (n - 1) xs
 -- To support -XOverloadedLists
 instance KnownNat n => GHC.IsList (Vec n a) where
     type Item (Vec n a) = a
-    fromListN = fromListN
-    fromList  = fromList  -- Not subject to list fusion optimizations
+    fromListN = fromListN sintVal
+    fromList  = fromList sintVal  -- Not subject to list fusion optimizations.
     toList    = F.toList
 
 --------------------------------------------------------------------------------
@@ -741,12 +699,13 @@ vecConstr = D.mkConstr vecDataType "fromList" [] D.Prefix
 instance (KnownNat n, D.Data a) => D.Data (Vec n a) where
     toConstr   _ = vecConstr
     dataTypeOf _ = vecDataType
-    gfoldl  app pur v = pur fromList `app` F.toList v
+    gfoldl  app pur v = pur (fromList sintVal) `app` F.toList v
     gunfold app pur c
-        | D.constrIndex c == 1 = app (pur fromList)
+        | D.constrIndex c == 1 = app (pur (fromList sintVal))
         | otherwise            = error "gunfold@Vec: invalid constrIndex"
 
 --------------------------------------------------------------------------------
+
 instance Show a => Show (Vec n a) where
     showsPrec p xs = showParen (p >= precedence)
         $ showString "fromListN "
@@ -756,16 +715,18 @@ instance Show a => Show (Vec n a) where
 
 instance (KnownNat n, Read a) => Read (Vec n a) where
     readsPrec p = readParen (p >= precedence) $ \s ->
-        [ assertSize (length ls) (fromListN n ls, s''')
+        [ assertSize (length ls) (fromListN n m ls, s''')
         | ("fromListN", s') <- lex s
-        , (n, s'') <- readsPrec precedence s'
-        , (ls, s''') <- assertSize n readsPrec precedence s''
+        , (m, s'') <- readsPrec precedence s'
+        , (ls, s''') <- assertSize m readsPrec precedence s''
         ]
         where
+            n = sintVal @n
+
             assertSize :: Int -> b -> b
-            assertSize n x = if n /= nat2int @n
-                then error $ "Can't read a Vec with " <> show n <>
-                    " elements into a type `Vec " <> show (nat2int @n) <>
+            assertSize m x = if m /= unSInt n
+                then error $ "Can't read a Vec with " <> show m <>
+                    " elements into a type `Vec " <> show n <>
                     "`"
                 else x
 
@@ -948,8 +909,8 @@ instance KnownNat n => Monad (Vec n) where (>>=) = (>>-)
 --
 -- As opposed to the actual @liftA2@ it does not inspect the arguments which
 -- makes it possible it to use in code that has lazy knot-tying.
-liftA2Lazy :: KnownNat n => (a -> b -> c) -> Vec n a -> Vec n b -> Vec n c
-liftA2Lazy f xs ys = tabulate $ \i ->
+liftA2Lazy :: SInt n -> (a -> b -> c) -> Vec n a -> Vec n b -> Vec n c
+liftA2Lazy sn f xs ys = tabulateVec sn $ \i ->
     indexK xs i $ \x ->
     indexK ys i $ \y ->
       f x y
@@ -1132,9 +1093,9 @@ instance KnownNat n => Representable (Vec n) where
     {-# INLINE index #-}
 
 -- | 'Prelude.scanl', for 'Vec'.
-vscanl :: KnownNat (1 + n) => (b -> a -> b) -> b -> Vec n a -> Vec (1 + n) b
+vscanl :: (b -> a -> b) -> b -> Vec n a -> Vec (1 + n) b
 -- TODO(awpr): we can probably subject the input Vec to fusion here.
-vscanl f b = listVec sintVal . scanl f b . F.toList
+vscanl f b v = listVec (sintVal `addSInt` svSize v) . scanl f b $ F.toList v
 
 
 --------------------------------------------------------------------------------
@@ -1268,18 +1229,18 @@ concatMap f = concat . fmap f
 -- | Generate a Vec by repeated application of a function.
 --
 -- > toList (Vec.iterate @n f z) === take (valueOf @n) (Prelude.iterate f z)
-iterate :: forall n a. KnownNat n => (a -> a) -> a -> Vec n a
-iterate f z =
-    createVec sintVal $ \mv ->
-       foldMFin_ sintVal (\x i -> f x <$ writeMV mv i x) z
+iterate :: SInt n -> (a -> a) -> a -> Vec n a
+iterate sn f z =
+    createVec sn $ \mv ->
+       foldMFin_ sn (\x i -> f x <$ writeMV mv i x) z
 {-# INLINE iterate #-}
 
 
 -- | A strict version of 'iterate'.
-iterate' :: forall n a. KnownNat n => (a -> a) -> a -> Vec n a
-iterate' f !z =
-    createVec sintVal $ \mv ->
-        foldMFin_ sintVal (\x i -> f x <$ (writeMV mv i $! x)) z
+iterate' :: SInt n -> (a -> a) -> a -> Vec n a
+iterate' sn f !z =
+    createVec sn $ \mv ->
+        foldMFin_ sn (\x i -> f x <$ (writeMV mv i $! x)) z
 {-# INLINE iterate' #-}
 
 
@@ -1310,8 +1271,8 @@ rot o = \v -> materialize (rotVA o (access v))
   #-}
 
 -- | Return a vector with all elements of the type in ascending order.
-viota :: KnownNat n => Vec n (Fin n)
-viota = mkVec sintVal id
+viota :: SInt n -> Vec n (Fin n)
+viota sn = mkVec sn id
 {-# INLINE viota #-}
 
 -- | One variant of the cross product of two vectors.
@@ -1382,12 +1343,10 @@ vsortOn f xs = listVec (svSize xs). L.sortOn f . F.toList $ xs
 
 --------------------------------
 -- | Transpose a vector of vectors.
-vtranspose :: forall m n a
-            . KnownNat m
-           => Vec n (Vec m a) -> Vec m (Vec n a)
-vtranspose xs =
+vtranspose :: SInt m -> Vec n (Vec m a) -> Vec m (Vec n a)
+vtranspose sm xs =
   let !s = vSize xs
-      !t = valueOf @m
+      !t = unSInt sm
   in  unsafeMkVec t $ \ i ->
         -- s is the size of the outer vector, i.e. valueOf @n
         unsafeMkVec s $ \ j ->
