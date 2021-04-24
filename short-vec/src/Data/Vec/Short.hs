@@ -64,11 +64,8 @@ module Data.Vec.Short
          , vfindIndex
 
          -- * Additional zips, maps, folds, etc.
-         , map', mapWithPos, mapWithPos', withPos
+         , map', imap', withPos
          , cross
-         , toListWithPos, foldrWithPos
-         , traversePos_, forPos_
-         , traverseWithPos_, forVecWithPos_
          , vscanl
          , liftA2Lazy
          ) where

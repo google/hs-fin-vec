@@ -84,8 +84,9 @@ import Data.Distributive (Distributive(..))
 import Data.Foldable.WithIndex (FoldableWithIndex(..))
 import Data.Functor.Apply (Apply(..))
 import Data.Functor.Bind (Bind(..))
-import Data.Functor.Rep (Representable(..), ifoldMapRep, itraverseRep)
-import Data.Functor.WithIndex (FunctorWithIndex(..))
+import Data.Functor.Rep (Representable(..))
+import Data.Functor.WithIndex (FunctorWithIndex)
+import qualified Data.Functor.WithIndex as X (imap)
 import Data.Portray (Portray(..), Portrayal(..), strAtom)
 import Data.Traversable.WithIndex (TraversableWithIndex(..))
 import qualified Test.QuickCheck as QC
@@ -825,15 +826,13 @@ instance Functor (Vec n) where
     x <$ v = pureVec (_aSize (access v)) x
     {-# INLINE (<$) #-}
 
--- TODO: Implement these instances via more efficient built-in functions.
-
-instance FunctorWithIndex (Fin n) (Vec n) where imap = mapWithPos
+instance FunctorWithIndex (Fin n) (Vec n) where imap = imap
 
 instance KnownNat n => FoldableWithIndex (Fin n) (Vec n) where
-  ifoldMap = ifoldMapRep
+  ifoldMap f = F.fold . imap f
 
 instance KnownNat n => TraversableWithIndex (Fin n) (Vec n) where
-  itraverse = itraverseRep
+  itraverse f = sequenceA . imap f
 
 -- | An element-strict version of 'fmap'.
 map' :: (a -> b) -> Vec n a -> Vec n b
@@ -841,22 +840,22 @@ map' f = materialize . seqVA . mapVA f . access
 {-# INLINE map' #-}
 
 -- | A variant of 'fmap' that provides the index in addition to the element.
-mapWithPos :: (Fin n -> a -> b) -> Vec n a -> Vec n b
-mapWithPos f = materialize . mapWithPosVA f . access
-{-# INLINE mapWithPos #-}
+imap :: (Fin n -> a -> b) -> Vec n a -> Vec n b
+imap f = materialize . mapWithPosVA f . access
+{-# INLINE imap #-}
 
 -- | Pair each element of a 'Vec' with its index.
 --
--- You can also use 'mapWithPos', but there should be no harm in using this
+-- You can also use 'imap', but there should be no harm in using this
 -- because the fusion framework should optimize away the intermediate Vec.
 withPos :: Vec n a -> Vec n (Fin n, a)
-withPos = mapWithPos (,)
+withPos = imap (,)
 {-# INLINE withPos #-}
 
--- | An element-strict version of 'mapWithPos'.
-mapWithPos' :: (Fin n -> a -> b) -> Vec n a -> Vec n b
-mapWithPos' f = materialize . seqVA . mapWithPosVA f . access
-{-# INLINE mapWithPos' #-}
+-- | An element-strict version of 'imap'.
+imap' :: (Fin n -> a -> b) -> Vec n a -> Vec n b
+imap' f = materialize . seqVA . mapWithPosVA f . access
+{-# INLINE imap' #-}
 
 pureVec_, pureVec :: SInt n -> a -> Vec n a
 pureVec_ n x = runST $ newMV n x >>= unsafeFreezeMV
@@ -1019,45 +1018,6 @@ instance Foldable (Vec n) where
 
     elem x = coerce . foldMap (Any . (== x))
     {-# INLINE elem #-}
-
--- | A fusion of 'F.toList' and 'withPos' to avoid allocating the
--- intermediate array. This is a \"good producer\" for list fusion.
---
--- TODO(awpr): this shouldn't be necessary with the fusion framework in place.
-toListWithPos :: Vec n a -> [(Fin n, a)]
-toListWithPos = F.toList . withPos
-{-# INLINE toListWithPos #-}
-
--- | A fusion of 'foldr' and 'withPos', to avoid allocating the
--- intermediate array.
---
--- TODO(awpr): this shouldn't be necessary with the fusion framework in place.
-foldrWithPos :: (Fin n -> a -> b -> b) -> b -> Vec n a -> b
-foldrWithPos f z = foldr (uncurry f) z . withPos
-{-# INLINE foldrWithPos #-}
-
--- | A variant of 'F.traverse_' which provides the positions of a vector,
--- rather than the elements in those positions.
-traversePos_ :: Applicative m => (Fin n -> m ()) -> Vec n a -> m ()
-traversePos_ f xs = F.traverse_ f (mkVec (_aSize (access xs)) id)
-{-# INLINE traversePos_ #-}
-
--- | Flipped version of 'traversePos_'.
-forPos_ :: Applicative m => Vec n a -> (Fin n -> m ()) -> m ()
-forPos_ = flip traversePos_
-{-# INLINE forPos_ #-}
-
--- | A variant of 'F.traverse_' which provides both the positions and the
--- elements at those positions.
-traverseWithPos_ :: Applicative m => (Fin n -> a -> m ()) -> Vec n a -> m ()
-traverseWithPos_ f = F.traverse_ (uncurry f) . withPos
-{-# INLINE traverseWithPos_ #-}
-
--- TODO(b/109671009): better name for this.
--- | Flipped version of 'traverseWithPos_'.
-forVecWithPos_ :: Applicative m => Vec n a -> (Fin n -> a -> m ()) -> m ()
-forVecWithPos_ = flip traverseWithPos_
-{-# INLINE forVecWithPos_ #-}
 
 traverseVec :: Applicative f => (a -> f b) -> Vec n a -> f (Vec n b)
 traverseVec f = sequenceVA . mapVA f . access

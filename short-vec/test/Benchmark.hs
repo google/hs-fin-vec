@@ -28,6 +28,7 @@ import Data.Semigroup (Sum(..))
 import Control.DeepSeq (force)
 import Data.Vec.Short
 import Data.Fin.Int (fin, finToInt, modNegate)
+import Data.Functor.WithIndex (FunctorWithIndex(..))
 
 import qualified Gauge as G
 
@@ -83,7 +84,7 @@ benchConvolve = G.bench "convolve" $ G.nf
   theAnswer
 
 benchMapWithPos = G.bench "mapWithPos'" $
-  G.whnf (mapWithPos' (\i -> (+) (finToInt i))) theAnswer
+  G.whnf (imap (\i -> (+) (finToInt i))) theAnswer
 
 benchMapToList = G.bench "mapToList" $ G.nf (map (+2) . toList) theAnswer
 benchMapToListMap = G.bench "mapToListMap" $

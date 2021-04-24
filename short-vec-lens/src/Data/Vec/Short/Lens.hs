@@ -83,7 +83,6 @@ import Data.Vec.Short.Internal
 #if !MIN_VERSION_lens(5,0,0)
 import qualified Control.Lens as L
 import Data.Foldable.WithIndex (FoldableWithIndex(..))
-import Data.Functor.WithIndex (FunctorWithIndex(..))
 import Data.Traversable.WithIndex (TraversableWithIndex(..))
 #endif
 
@@ -211,7 +210,7 @@ vdiagonal :: forall n a. KnownNat n => Lens' (Vec n (Vec n a)) (Vec n a)
 vdiagonal = lens getf setf
     where
     getf :: Vec n (Vec n a) -> Vec n a
-    getf = mapWithPos (flip (!))
+    getf = imap (flip (!))
 
     setf :: Vec n (Vec n a) -> Vec n a -> Vec n (Vec n a)
     setf m d =
