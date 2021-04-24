@@ -27,7 +27,7 @@ import Data.Semigroup (Sum(..))
 
 import Control.DeepSeq (force)
 import Data.Vec.Short
-import Data.Fin.Int (finToInt, modNegate)
+import Data.Fin.Int (fin, finToInt, modNegate)
 
 import qualified Gauge as G
 
@@ -56,7 +56,7 @@ benchMap = G.bench "map" $ G.whnf (map' (+2)) theAnswer
 benchMapId = G.bench "mapId" $ G.whnf (fmap id) theAnswer
 benchMapCoerce = G.bench "mapCoerce" $ G.whnf (fmap Sum) theAnswer
 benchMap2 = G.bench "map2" $ G.whnf (map' (+2) . fmap (+2)) theAnswer
-benchRot = G.bench "rot" $ G.whnf (rot 7) theAnswer
+benchRot = G.bench "rot" $ G.whnf (rot (fin 7)) theAnswer
 benchSum = G.bench "sum" $ G.whnf sum theAnswer
 benchSumMap = G.bench "sumMap" $ G.whnf (sum . fmap (+7)) theAnswer
 benchFoldr = G.bench "foldr" $ G.whnf (foldr (+) 0) theAnswer
@@ -75,7 +75,11 @@ benchLiftA2 = G.bench "liftA2" $
   G.whnf (liftA2 (+) (pure 2 :: Vec 64 Int)) theAnswer
 
 benchConvolve = G.bench "convolve" $ G.nf
-  (\x -> liftA3 (\a b c -> a + b + c) (rot 1 x) x (rot (modNegate 1) x))
+  (\x -> liftA3
+    (\a b c -> a + b + c)
+    (rot (fin 1) x)
+    x
+    (rot (modNegate (fin 1)) x))
   theAnswer
 
 benchMapWithPos = G.bench "mapWithPos'" $
