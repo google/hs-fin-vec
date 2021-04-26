@@ -49,3 +49,4 @@ library:
   source-dirs: src
   exposed-modules:
     - Data.Finite
+    - Data.Finite.Table

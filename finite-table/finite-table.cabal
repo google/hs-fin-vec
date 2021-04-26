@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 88c9ddce38fde3f18892fda1414e8961225eb7c23536a8819d32cde61b9c2912
+-- hash: 7d31e7903eb39d8f2f6731b5add54cc23bad7c6498f68e72c96ce71775322dad
 
 name:           finite-table
 version:        0.1.0.0
@@ -30,6 +30,7 @@ source-repository head
 library
   exposed-modules:
       Data.Finite
+      Data.Finite.Table
   other-modules:
       Paths_finite_table
   hs-source-dirs:
