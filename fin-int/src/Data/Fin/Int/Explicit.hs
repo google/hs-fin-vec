@@ -39,7 +39,7 @@ module Data.Fin.Int.Explicit
          , fin, finFromIntegral, knownFin, tryFin, finMod, finDivMod, finToInt
            -- * Bound Manipulation
          , embed, unembed, tryUnembed
-         , shiftFin, unshiftFin, tryUnshiftFin, splitFin
+         , shiftFin, unshiftFin, tryUnshiftFin, splitFin, concatFin
          , weaken, strengthen
          -- * Enumeration
          , minFin, maxFin
@@ -420,6 +420,7 @@ divModFin :: SInt m -> Fin (d * m) -> (Fin d, Fin m)
 divModFin sm (Fin x) = (Fin d, Fin r)
  where
   (d, r) = divMod x (unSInt sm)
+{-# INLINEABLE divModFin #-}
 
 mkChk
   :: HasCallStack
@@ -494,9 +495,15 @@ unshiftFin sm sn (Fin x) = fin sn (x - unSInt sm)
 -- | Deconstructs the given Fin into one of two cases depending where it lies
 -- in the given range.
 splitFin :: SInt m -> Fin (m + n) -> Either (Fin m) (Fin n)
-splitFin sm i = case tryUnembed sm i of
-  Just loI -> Left loI
-  Nothing -> Right $ unsafeFin $ finToInt i - unSInt sm
+splitFin sm (Fin x)
+  | x < unSInt sm = Left $ Fin x
+  | otherwise     = Right $ Fin (x - unSInt sm)
+
+-- | The inverse of 'splitFin'.
+concatFin :: SInt m -> Either (Fin m) (Fin n) -> Fin (m + n)
+concatFin sm e = case e of
+  Left (Fin x) -> Fin x
+  Right x -> shiftFin sm x
 
 -- | Convert to a bigger type.
 {-# INLINE embed #-}

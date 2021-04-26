@@ -53,17 +53,20 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UnboxedTuples #-}
 
+#include "MachDeps.h"
+
 module Data.SInt
          ( SInt(SI#, unSInt), trySIntVal, sintVal, reifySInt, withSInt
          , addSInt, subSInt, subSIntLE, subSIntL, mulSInt, divSIntL, divSIntR
+         , staticSIntVal
          ) where
 
 import Data.Proxy (Proxy(..))
 import GHC.Exts (Int(I#), addIntC#, mulIntMayOflo#, proxy#)
 import GHC.Stack (HasCallStack)
 import GHC.TypeNats
-         ( type (<=), type (+), type (-), type (*), KnownNat, Nat
-         , natVal', SomeNat(..), someNatVal
+         ( type (<=), type (+), type (-), type (*), type (^), CmpNat
+         , KnownNat, Nat, natVal', SomeNat(..), someNatVal
          )
 import Numeric.Natural (Natural)
 
@@ -99,12 +102,15 @@ withSInt n f
   | n < 0     = error "withSInt: negative value"
   | otherwise = f (SI# n)
 
+maxInt :: Natural
+maxInt = fromIntegral (maxBound :: Int)
+
 -- | Produce an 'SInt' for a given 'KnownNat', or 'Nothing' if out of range.
 trySIntVal :: forall n. KnownNat n => Maybe (SInt n)
 trySIntVal =
-  let n = toInteger (natVal' @n proxy#)
-      n' = fromInteger n
-  in  if toInteger n' == n then Just (MkSInt n') else Nothing
+  let n = natVal' @n proxy#
+  in  if n <= maxInt then Just (MkSInt (fromIntegral n)) else Nothing
+{-# INLINE trySIntVal #-}
 
 -- | Produce an 'SInt' for a given 'KnownNat', or 'error' if out of range.
 sintVal :: forall n. (HasCallStack, KnownNat n) => SInt n
@@ -112,6 +118,21 @@ sintVal = case trySIntVal of
   Just n -> n
   Nothing -> error $
     "Nat " ++ show (natVal' @n proxy#) ++ " out of range for Int."
+{-# INLINE sintVal #-}
+
+type IntBits = WORD_SIZE_IN_BITS
+type IntMaxP1 = 2 ^ (IntBits - 1)
+
+-- | Like 'sintVal', but with static proof that it's in-bounds.
+--
+-- This optimizes down to an actual primitive literal wrapped in the
+-- appropriate constructors, unlike 'sintVal', where the bounds checking gets
+-- in the way.  If you're constructing a statically-known 'SInt', use
+-- 'staticSIntVal'; while if you're constructing an 'SInt' from a runtime
+-- 'KnownNat' instance, you'll have to use 'sintVal'.
+staticSIntVal :: forall n. (CmpNat n IntMaxP1 ~ 'LT, KnownNat n) => SInt n
+staticSIntVal = MkSInt (fromIntegral (natVal' @n proxy#))
+{-# INLINE staticSIntVal #-}
 
 -- | Add two 'SInt's with bounds checks; 'error' if the result overflows.
 addSInt :: HasCallStack => SInt m -> SInt n -> SInt (m + n)

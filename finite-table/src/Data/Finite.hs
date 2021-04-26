@@ -17,6 +17,8 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -33,35 +35,43 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides a class of types isomorphic to some statically-known @'Fin' n@.
+--
+-- This comes with Generics-based generated instances, and can be used to
+-- generate instances of 'Enum' and 'Bounded' (for which the stock deriving
+-- only supports sum types with no fields).
+--
+-- Since this is all still represented by 'Int' internally, things will start
+-- raising 'error's if your type has more values than can fit in positive
+-- 'Int's.  It's not recommended to use this on large types, and there's not
+-- much reason to want to anyway, as its main uses are to derive 'Enum' (which
+-- is also based on 'Int') and to make the type compatible with
+-- 'Data.Finite.Table.Table' (which would be impractically large for a key type
+-- with too many values to represent as 'Int').
 
 module Data.Finite
          ( -- * Finite Enumerations
            Finite(..), enumerate, asFin
          ) where
 
-import Data.Bifunctor (bimap)
-import Data.Coerce (coerce)
 import Data.Functor.Identity (Identity)
 import Data.Int (Int8, Int16)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup (WrappedMonoid, Min, Max, First, Last)
-import Data.Void (Void, absurd)
+import Data.Void (Void)
 import Data.Word (Word8, Word16)
-import GHC.TypeNats (type (+), type (*), KnownNat, Nat, natVal)
+import GHC.Generics
+import GHC.TypeNats (type (+), type (*), type (<=), KnownNat, Nat, natVal)
 
 import Control.Lens (Iso', iso)
-import Data.Constraint (withDict, (\\))
-import Data.Constraint.Nat
-         ( plusMonotone1, plusMonotone2
-         , zeroLe
-         )
-import Data.SInt (SInt, sintVal, addSInt, mulSInt)
+import Data.SInt (SInt, sintVal, addSInt, mulSInt, staticSIntVal, reifySInt)
 
 import Data.Fin.Int.Explicit
-         ( maxFin, enumFin, shiftFin, tryUnshiftFin
-         , embed, splitFin, crossFin, divModFin
+         ( enumFin, concatFin, splitFin, crossFin, divModFin, minFin, maxFin
+         , fin
          )
-import Data.Fin.Int (Fin, fin, finToInt, unsafeFin)
+import Data.Fin.Int (Fin, finToInt, unsafeFin)
+import qualified Data.Vec.Short as V
+import Data.Wrapped (Wrapped(..))
 
 -- | A typeclass of finite enumerable types.
 --
@@ -100,10 +110,6 @@ class Finite a where
   -- 'KnownNat' is in the class context.  Instead, we use 'SInt' to allow
   -- computing the cardinality at runtime.
   cardinality :: SInt (Cardinality a)
-  default cardinality
-    :: KnownNat (Cardinality a)
-    => SInt (Cardinality a)
-  cardinality = sintVal
 
   toFin :: a -> Fin (Cardinality a)
   fromFin :: Fin (Cardinality a) -> a
@@ -117,8 +123,8 @@ enumerate = fromFin <$> enumFin (cardinality @a)
 -- This should only be used for types with 'fromEnum' range @0..Cardinality a@;
 -- this is notably not the case for signed integer types, which have negative
 -- 'fromEnum' values.
-toFinEnum :: (KnownNat (Cardinality a), Enum a) => a -> Fin (Cardinality a)
-toFinEnum = fin . fromEnum
+toFinEnum :: Enum a => SInt (Cardinality a) -> a -> Fin (Cardinality a)
+toFinEnum sn = fin sn . fromEnum
 
 -- | Implement 'fromFin' by 'toEnum'.
 --
@@ -126,19 +132,10 @@ toFinEnum = fin . fromEnum
 fromFinEnum :: Enum a => Fin (Cardinality a) -> a
 fromFinEnum = toEnum . finToInt
 
-instance Finite () where
-  type Cardinality () = 1
-  toFin _ = fin 0
-  fromFin _ = ()
-
-instance Finite Bool where
-  type Cardinality Bool = 2
-  toFin = toFinEnum
-  fromFin = fromFinEnum
-
 instance Finite Char where
   type Cardinality Char = 1114112 -- According to 'minBound' and 'maxBound'
-  toFin = toFinEnum
+  cardinality = staticSIntVal
+  toFin = toFinEnum staticSIntVal
   fromFin = fromFinEnum
 
 toFinExcessK
@@ -153,111 +150,135 @@ fromFinExcessK =
 
 instance Finite Int8 where
   type Cardinality Int8 = 256
+  cardinality = staticSIntVal
   toFin = toFinExcessK @128
   fromFin = fromFinExcessK @128
 
 instance Finite Int16 where
   type Cardinality Int16 = 65536
+  cardinality = staticSIntVal
   toFin = toFinExcessK @32768
   fromFin = fromFinExcessK @32768
 
 instance Finite Word8 where
   type Cardinality Word8 = 256
+  cardinality = staticSIntVal
   toFin = unsafeFin . id @Int . fromIntegral
   fromFin = fromIntegral . finToInt
 
 instance Finite Word16 where
   type Cardinality Word16 = 65536
+  cardinality = staticSIntVal
   toFin = unsafeFin . id @Int . fromIntegral
   fromFin = fromIntegral . finToInt
 
-instance Finite Ordering where
-  type Cardinality Ordering = 3
-  toFin = toFinEnum
-  fromFin = fromFinEnum
-
 instance KnownNat n => Finite (Fin n) where
   type Cardinality (Fin n) = n
+  cardinality = sintVal
   toFin = id
   fromFin = id
 
-instance Finite a => Finite (Identity a) where
-  type Cardinality (Identity a) = Cardinality a
-  cardinality = cardinality @a
-  toFin = coerce (toFin @(Identity a))
-  fromFin = coerce (fromFin @(Identity a))
+-- Aesthetics: make more derived instances fit on one line.
+type G = Wrapped Generic
 
-instance Finite a => Finite (WrappedMonoid a) where
-  type Cardinality (WrappedMonoid a) = Cardinality a
-  cardinality = cardinality @a
-  toFin = coerce (toFin @(WrappedMonoid a))
-  fromFin = coerce (fromFin @(WrappedMonoid a))
+deriving via G () instance Finite ()
+deriving via G Bool instance Finite Bool
+deriving via G Ordering instance Finite Ordering
+deriving via G Void instance Finite Void
+deriving via G (Identity a) instance Finite a => Finite (Identity a)
+deriving via G (WrappedMonoid a) instance Finite a => Finite (WrappedMonoid a)
+deriving via G (Last a) instance Finite a => Finite (Last a)
+deriving via G (First a) instance Finite a => Finite (First a)
+deriving via G (Max a) instance Finite a => Finite (Max a)
+deriving via G (Min a) instance Finite a => Finite (Min a)
+deriving via G (Maybe a) instance Finite a => Finite (Maybe a)
+deriving via G (Either a b) instance (Finite a, Finite b) => Finite (Either a b)
 
-instance Finite a => Finite (Last a) where
-  type Cardinality (Last a) = Cardinality a
-  cardinality = cardinality @a
-  toFin = coerce (toFin @(Last a))
-  fromFin = coerce (fromFin @(Last a))
+deriving via G (a, b) instance (Finite a, Finite b) => Finite (a, b)
+deriving via G (a, b, c)
+  instance (Finite a, Finite b, Finite c) => Finite (a, b, c)
 
-instance Finite a => Finite (First a) where
-  type Cardinality (First a) = Cardinality a
-  cardinality = cardinality @a
-  toFin = coerce (toFin @(First a))
-  fromFin = coerce (fromFin @(First a))
+deriving via G (a, b, c, d)
+  instance (Finite a, Finite b, Finite c, Finite d) => Finite (a, b, c, d)
+deriving via G (a, b, c, d, e)
+  instance (Finite a, Finite b, Finite c, Finite d, Finite e)
+        => Finite (a, b, c, d, e)
 
-instance Finite a => Finite (Max a) where
-  type Cardinality (Max a) = Cardinality a
-  cardinality = cardinality @a
-  toFin = coerce (toFin @(Max a))
-  fromFin = coerce (fromFin @(Max a))
+instance (Generic a, GFinite (Rep a)) => Finite (Wrapped Generic a) where
+  type Cardinality (Wrapped Generic a) = GCardinality (Rep a)
+  cardinality = gcardinality @(Rep a)
+  toFin = gtoFin . from . unWrapped
+  fromFin = Wrapped . to . gfromFin
 
-instance Finite a => Finite (Min a) where
-  type Cardinality (Min a) = Cardinality a
-  cardinality = cardinality @a
-  toFin = coerce (toFin @(Min a))
-  fromFin = coerce (fromFin @(Min a))
+type family GCardinality a where
+  GCardinality V1         = 0
+  GCardinality U1         = 1
+  GCardinality (K1 i a)   = Cardinality a
+  GCardinality (M1 i c f) = GCardinality f
+  GCardinality (f :+: g)  = GCardinality f + GCardinality g
+  GCardinality (f :*: g)  = GCardinality f * GCardinality g
 
-instance Finite a => Finite (Maybe a) where
-  type Cardinality (Maybe a) = 1 + Cardinality a
-  cardinality = sintVal `addSInt` cardinality @a
-  toFin =
-    withDict (zeroLe @(Cardinality a)) $
-    maybe (maxFin (cardinality @(Maybe a))) (shiftFin sintVal . toFin)
-    \\ plusMonotone2 @1 @0 @(Cardinality a)
-  fromFin = fmap fromFin . tryUnshiftFin sintVal (cardinality @a)
+class GFinite a where
+  gcardinality :: SInt (GCardinality a)
+  gtoFin :: a p -> Fin (GCardinality a)
+  gfromFin :: Fin (GCardinality a) -> a p
 
-instance (Finite a, Finite b) => Finite (Either a b) where
-  type Cardinality (Either a b) = Cardinality a + Cardinality b
-  cardinality = cardinality @a `addSInt` cardinality @b
+instance GFinite V1 where
+  gcardinality = staticSIntVal
+  gtoFin x = case x of {}
+  gfromFin x = V.nil V.! x
 
-  toFin =
-    either (embed . toFin) (shiftFin (cardinality @a). toFin)
-    \\ plusMonotone2 @(Cardinality a) @0 @(Cardinality b)
-    \\ plusMonotone1 @0 @(Cardinality a) @(Cardinality b)
+instance GFinite U1 where
+  gcardinality = staticSIntVal
+  gtoFin U1 = minFin
+  gfromFin !_ = U1
 
-  fromFin = bimap fromFin fromFin . splitFin (cardinality @a)
+instance Finite a => GFinite (K1 i a) where
+  gcardinality = cardinality @a
+  gtoFin = toFin . unK1
+  gfromFin = K1 . fromFin
 
-instance (Finite a, Finite b) => Finite (a, b) where
-  type Cardinality (a, b) = Cardinality a * Cardinality b
-  cardinality = cardinality @a `mulSInt` cardinality @b
+instance GFinite f => GFinite (M1 i c f) where
+  gcardinality = gcardinality @f
+  gtoFin = gtoFin . unM1
+  gfromFin = M1 . gfromFin
 
-  toFin (a, b) = crossFin (cardinality @b) (toFin a) (toFin b)
+instance (GFinite f, GFinite g) => GFinite (f :+: g) where
+  gcardinality = gcardinality @f `addSInt` gcardinality @g
+  gtoFin x = concatFin (gcardinality @f) $ case x of
+    L1 f -> Left $ gtoFin f
+    R1 g -> Right $ gtoFin g
+  gfromFin =
+    either (L1 . gfromFin) (R1 . gfromFin) . splitFin (gcardinality @f)
+  {-# INLINE gtoFin #-}
+  {-# INLINE gfromFin #-}
 
-  fromFin f =
-    let (fa, fb) = divModFin (cardinality @b) f
-    in  (fromFin fa, fromFin fb)
-
-instance (Finite a, Finite b, Finite c) => Finite (a, b, c) where
-  type Cardinality (a, b, c) = Cardinality a * Cardinality b * Cardinality c
-  cardinality = cardinality @((a, b), c)
-  toFin (a, b, c) = toFin ((a, b), c)
-  fromFin f = let ((a, b), c) = fromFin f in (a, b, c)
-
-instance Finite Void where
-  type Cardinality Void = 0
-  toFin = absurd
-  fromFin !_ = error "Unreachable: x :: Fin 0 must have been bottom."
+instance (GFinite f, GFinite g) => GFinite (f :*: g) where
+  gcardinality = gcardinality @f `mulSInt` gcardinality @g
+  gtoFin (f :*: g) = crossFin (gcardinality @g) (gtoFin f) (gtoFin g)
+  gfromFin x =
+    let (f, g) = divModFin (gcardinality @g) x
+    in  gfromFin f :*: gfromFin g
+  {-# INLINE gtoFin #-}
+  {-# INLINE gfromFin #-}
 
 -- | An 'Iso' between @a@ and the corresponding 'Fin' type, as per 'Finite'.
 asFin :: Finite a => Iso' a (Fin (Cardinality a))
 asFin = iso toFin fromFin
+
+instance Finite a => Enum (Wrapped Finite a) where
+  toEnum = Wrapped . fromFin . fin (cardinality @a)
+  fromEnum = finToInt . toFin . unWrapped
+  enumFrom = reifySInt (cardinality @a) $
+    fmap (Wrapped . fromFin) . enumFrom . toFin . unWrapped
+  enumFromThen (Wrapped x) = reifySInt (cardinality @a) $
+    fmap (Wrapped . fromFin) . enumFromThen (toFin x) . toFin . unWrapped
+  enumFromTo (Wrapped x) = reifySInt (cardinality @a) $
+    fmap (Wrapped . fromFin) . enumFromTo (toFin x) . toFin . unWrapped
+  enumFromThenTo (Wrapped x) (Wrapped y) = reifySInt (cardinality @a) $
+    fmap (Wrapped . fromFin) . enumFromThenTo (toFin x) (toFin y) .
+    toFin . unWrapped
+
+instance (Finite a, 1 <= Cardinality a) => Bounded (Wrapped Finite a) where
+  minBound = Wrapped $ fromFin minFin
+  maxBound = Wrapped $ fromFin (maxFin (cardinality @a))

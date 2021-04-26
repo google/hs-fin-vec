@@ -38,7 +38,7 @@ module Data.Fin.Int
          , fin, finFromIntegral, knownFin, tryFin, finMod, finDivMod, finToInt
            -- * Bound Manipulation
          , embed, unembed, tryUnembed
-         , shiftFin, unshiftFin, tryUnshiftFin, splitFin
+         , shiftFin, unshiftFin, tryUnshiftFin, splitFin, concatFin
          , weaken, strengthen
          -- * Enumeration
          , minFin, maxFin
@@ -275,6 +275,10 @@ tryUnshiftFin = E.tryUnshiftFin sintVal sintVal
 -- in the given range.
 splitFin :: forall m n. KnownNat m => Fin (m + n) -> Either (Fin m) (Fin n)
 splitFin = E.splitFin sintVal
+
+-- | The inverse of 'splitFin'.
+concatFin :: forall m n. KnownNat m => Either (Fin m) (Fin n) -> Fin (m + n)
+concatFin = E.concatFin sintVal
 
 -- | Convert to a possibly smaller type.
 -- This function fails if the number is too big.
