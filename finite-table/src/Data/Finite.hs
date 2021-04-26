@@ -26,6 +26,7 @@
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -50,7 +51,7 @@
 
 module Data.Finite
          ( -- * Finite Enumerations
-           Finite(..), enumerate, asFin
+           Finite(..), cardinality, enumerate, asFin
          ) where
 
 import Data.Functor.Identity (Identity)
@@ -60,6 +61,8 @@ import Data.Semigroup (WrappedMonoid, Min, Max, First, Last)
 import Data.Void (Void)
 import Data.Word (Word8, Word16)
 import GHC.Generics
+         ( Generic(..), V1, U1(..), M1(..), K1(..), (:+:)(..), (:*:)(..)
+         )
 import GHC.TypeNats (type (+), type (*), type (<=), KnownNat, Nat, natVal)
 
 import Control.Lens (Iso', iso)
@@ -109,10 +112,22 @@ class Finite a where
   -- @type Cardinality (Maybe a) = Cardinality a + 1@ is valid if the
   -- 'KnownNat' is in the class context.  Instead, we use 'SInt' to allow
   -- computing the cardinality at runtime.
-  cardinality :: SInt (Cardinality a)
+  cardinality' :: SC a (Cardinality a)
 
   toFin :: a -> Fin (Cardinality a)
   fromFin :: Fin (Cardinality a) -> a
+
+-- | A wrapper type around @'Cardinality' a@ to support DerivingVia on GHC 8.6.
+--
+-- Instance methods that don't mention the instance head outside of type
+-- families / aliases don't work with DerivingVia on GHC 8.6 because it uses
+-- type signatures rather than TypeApplications to choose the instance to call
+-- into.
+newtype SC a n = SC { getSC :: SInt n }
+
+-- | A witness that the cardinality of @a@ is known at runtime.
+cardinality :: forall a. Finite a => SInt (Cardinality a)
+cardinality = getSC (cardinality' @a)
 
 -- | Generate a list containing every value of @a@.
 enumerate :: forall a. Finite a => [a]
@@ -134,7 +149,7 @@ fromFinEnum = toEnum . finToInt
 
 instance Finite Char where
   type Cardinality Char = 1114112 -- According to 'minBound' and 'maxBound'
-  cardinality = staticSIntVal
+  cardinality' = SC staticSIntVal
   toFin = toFinEnum staticSIntVal
   fromFin = fromFinEnum
 
@@ -150,31 +165,31 @@ fromFinExcessK =
 
 instance Finite Int8 where
   type Cardinality Int8 = 256
-  cardinality = staticSIntVal
+  cardinality' = SC staticSIntVal
   toFin = toFinExcessK @128
   fromFin = fromFinExcessK @128
 
 instance Finite Int16 where
   type Cardinality Int16 = 65536
-  cardinality = staticSIntVal
+  cardinality' = SC staticSIntVal
   toFin = toFinExcessK @32768
   fromFin = fromFinExcessK @32768
 
 instance Finite Word8 where
   type Cardinality Word8 = 256
-  cardinality = staticSIntVal
+  cardinality' = SC staticSIntVal
   toFin = unsafeFin . id @Int . fromIntegral
   fromFin = fromIntegral . finToInt
 
 instance Finite Word16 where
   type Cardinality Word16 = 65536
-  cardinality = staticSIntVal
+  cardinality' = SC staticSIntVal
   toFin = unsafeFin . id @Int . fromIntegral
   fromFin = fromIntegral . finToInt
 
 instance KnownNat n => Finite (Fin n) where
   type Cardinality (Fin n) = n
-  cardinality = sintVal
+  cardinality' = SC sintVal
   toFin = id
   fromFin = id
 
@@ -206,7 +221,7 @@ deriving via G (a, b, c, d, e)
 
 instance (Generic a, GFinite (Rep a)) => Finite (Wrapped Generic a) where
   type Cardinality (Wrapped Generic a) = GCardinality (Rep a)
-  cardinality = gcardinality @(Rep a)
+  cardinality' = SC $ gcardinality @(Rep a)
   toFin = gtoFin . from . unWrapped
   fromFin = Wrapped . to . gfromFin
 

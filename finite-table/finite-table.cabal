@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1a33ea573443bda54be3307bf9e5201e5ad9622d9507736570823cdae6f8fe2b
+-- hash: 18d27bcdaecf979ebea0e5833708940455f17e98798b36b539696f3157a9eaea
 
 name:           finite-table
 version:        0.1.0.0
@@ -53,7 +53,7 @@ library
     , wrapped >=0.1 && <0.2
   default-language: Haskell2010
 
-test-suite Deriving-test
+test-suite Finite-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:

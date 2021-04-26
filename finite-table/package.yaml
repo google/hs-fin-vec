@@ -52,7 +52,7 @@ library:
     - Data.Finite.Table
 
 tests:
-  Deriving-test:
+  Finite-test:
     source-dirs: test
     main: Main.hs
     dependencies:
