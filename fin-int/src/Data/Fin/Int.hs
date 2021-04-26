@@ -38,9 +38,10 @@ module Data.Fin.Int
          , fin, finFromIntegral, knownFin, tryFin, finMod, finDivMod, finToInt
            -- * Bound Manipulation
          , embed, unembed, tryUnembed
-         , shiftFin, unshiftFin, splitFin
+         , shiftFin, unshiftFin, tryUnshiftFin, splitFin
          , weaken, strengthen
          -- * Enumeration
+         , minFin, maxFin
          , enumFin, enumFinDown, enumDownFrom, enumDownTo, enumDownFromTo
            -- * Arithmetic
            -- ** In 'Maybe'
@@ -72,7 +73,7 @@ import Data.Fin.Int.Explicit
          , attInt, attMinus, attPlus, attLT
          , half, quarter
          , embed, weaken, finToInt
-         , modSub, trySub
+         , modSub, trySub, minFin
          )
 import qualified Data.Fin.Int.Explicit as E
 
@@ -121,6 +122,11 @@ complementFin  = E.complementFin sintVal
 -- | (*2), but works even if 2 is out-of-bounds.
 twice :: KnownNat n => Fin n -> Fin n
 twice = E.twice sintVal
+
+-- | The maximal value of the given inhabited 'Fin' type (i.e @n - 1@).
+maxFin :: (1 <= n, KnownNat n) => Fin n
+maxFin = E.maxFin sintVal
+{-# INLINE maxFin #-}
 
 -- | Enumerate the entire domain in ascending order. This is equivalent
 -- to @enumFrom 0@ or @enumFrom minBound@, but without introducing a
@@ -247,13 +253,23 @@ chkMul = E.chkMul sintVal
 strengthen :: forall n. KnownNat n => Fin (n+1) -> Maybe (Fin n)
 strengthen = E.strengthen sintVal
 
--- | 'shiftFin' increases the value and bound of a Fin argument both by @m@.
+-- | 'shiftFin' increases the value and bound of a Fin both by @m@.
 shiftFin :: forall m n. KnownNat m => Fin n -> Fin (m+n)
 shiftFin = E.shiftFin sintVal
 
--- | 'unshiftFin' decreases the value and bound of a Fin argument both by @m@.
-unshiftFin :: forall m n. (KnownNat m, KnownNat n) => Fin (m+n) -> Fin n
+-- | 'unshiftFin' decreases the value and bound of a Fin both by @m@.
+unshiftFin
+  :: forall m n
+   . (HasCallStack, KnownNat m, KnownNat n)
+  => Fin (m+n) -> Fin n
 unshiftFin = E.unshiftFin sintVal sintVal
+
+-- | 'tryUnshiftFin' decreases the value and bound of a Fin both by @m@.
+tryUnshiftFin
+  :: forall m n
+   . (KnownNat m, KnownNat n)
+  => Fin (m+n) -> Maybe (Fin n)
+tryUnshiftFin = E.tryUnshiftFin sintVal sintVal
 
 -- | Deconstructs the given Fin into one of two cases depending where it lies
 -- in the given range.
@@ -277,7 +293,5 @@ tryUnembed = E.tryUnembed sintVal
 --
 -- > crossFin @_ @n (x+1) y = n + crossFin @_ @n x y
 -- > crossFin @_ @n x (y+1) = 1 + crossFin @_ @n x y
-crossFin
-  :: forall m n
-   . (KnownNat n, KnownNat (m * n)) => Fin m -> Fin n -> Fin (m * n)
-crossFin = E.crossFin sintVal sintVal
+crossFin :: forall m n. KnownNat n => Fin m -> Fin n -> Fin (m * n)
+crossFin = E.crossFin sintVal

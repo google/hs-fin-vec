@@ -48,6 +48,7 @@ module Data.Finite
 
 import Prelude hiding ((.), id)
 
+import Control.Applicative (Applicative(..))
 import Data.Bifunctor (bimap)
 import Data.Coerce (coerce)
 import Data.Foldable (toList, traverse_)
@@ -83,16 +84,18 @@ import Data.Functor.WithIndex (FunctorWithIndex(..))
 import Data.Portray (Portray(..), Portrayal(..))
 import Data.Portray.Diff (Diff(..))
 import Data.Serialize (Serialize(..))
-import Data.SInt (SInt, sintVal, addSInt, mulSInt, reifySInt)
+import Data.SInt (SInt, sintVal, addSInt, mulSInt)
 import Data.Traversable.WithIndex (TraversableWithIndex(..))
 
 import Data.Vec.Short (Vec)
 import qualified Data.Vec.Short as V
+import qualified Data.Vec.Short.Explicit as VE
 import qualified Data.Vec.Short.Lens as V (ix)
-import Data.Fin.Int
-         ( Fin, embed, fin, finToInt, unsafeFin, weaken, strengthen, crossFin
-         , divModFin, enumFin, shiftFin, splitFin
+import Data.Fin.Int.Explicit
+         ( maxFin, enumFin, shiftFin, tryUnshiftFin
+         , embed, splitFin, crossFin, divModFin
          )
+import Data.Fin.Int (Fin, fin, finToInt, unsafeFin)
 
 #if !MIN_VERSION_lens(5,0,0)
 import qualified Control.Lens as L
@@ -145,7 +148,7 @@ class Finite a where
 
 -- | Generate a list containing every value of @a@.
 enumerate :: forall a. Finite a => [a]
-enumerate = reifySInt (cardinality @a) (fromFin <$> enumFin)
+enumerate = fromFin <$> enumFin (cardinality @a)
 
 -- | Implement 'toFin' by 'fromEnum'.
 --
@@ -253,45 +256,33 @@ instance Finite a => Finite (Min a) where
   fromFin = coerce (fromFin @(Min a))
 
 instance Finite a => Finite (Maybe a) where
-  type Cardinality (Maybe a) = Cardinality a + 1
-  cardinality = cardinality @a `addSInt` sintVal
+  type Cardinality (Maybe a) = 1 + Cardinality a
+  cardinality = sintVal `addSInt` cardinality @a
   toFin =
-    reifySInt (cardinality @(Maybe a)) $
     withDict (zeroLe @(Cardinality a)) $
-    maybe maxBound (weaken . toFin)
-    \\ plusMonotone1 @0 @(Cardinality a) @1
-  fromFin = reifySInt (cardinality @a) $ fmap fromFin . strengthen
+    maybe (maxFin (cardinality @(Maybe a))) (shiftFin sintVal . toFin)
+    \\ plusMonotone2 @1 @0 @(Cardinality a)
+  fromFin = fmap fromFin . tryUnshiftFin sintVal (cardinality @a)
 
 instance (Finite a, Finite b) => Finite (Either a b) where
   type Cardinality (Either a b) = Cardinality a + Cardinality b
   cardinality = cardinality @a `addSInt` cardinality @b
 
   toFin =
-    reifySInt (cardinality @a) $
-    reifySInt (cardinality @(Either a b)) $
-    either (embed . toFin) (shiftFin . toFin)
+    either (embed . toFin) (shiftFin (cardinality @a). toFin)
     \\ plusMonotone2 @(Cardinality a) @0 @(Cardinality b)
     \\ plusMonotone1 @0 @(Cardinality a) @(Cardinality b)
 
-  fromFin x =
-    reifySInt (cardinality @a) $
-    reifySInt (cardinality @b) $
-    reifySInt (cardinality @(Either a b)) $
-    bimap fromFin fromFin $ splitFin x
+  fromFin = bimap fromFin fromFin . splitFin (cardinality @a)
 
 instance (Finite a, Finite b) => Finite (a, b) where
   type Cardinality (a, b) = Cardinality a * Cardinality b
   cardinality = cardinality @a `mulSInt` cardinality @b
 
-  toFin (a, b) =
-    reifySInt (cardinality @(a, b)) $
-    reifySInt (cardinality @b) $
-    crossFin (toFin a) (toFin b)
+  toFin (a, b) = crossFin (cardinality @b) (toFin a) (toFin b)
 
   fromFin f =
-    reifySInt (cardinality @a) $
-    reifySInt (cardinality @b) $
-    let (fa, fb) = divModFin f
+    let (fa, fb) = divModFin (cardinality @b) f
     in  (fromFin fa, fromFin fb)
 
 instance (Finite a, Finite b, Finite c) => Finite (a, b, c) where
@@ -344,13 +335,16 @@ instance NFData a => NFData (Table k a) where
   rnf (Table vec) = rnf vec
 
 instance (Finite k, Serialize a) => Serialize (Table k a) where
-  get = reifySInt (cardinality @k) $ sequenceA $ tabulate (const get)
+  get = sequenceA $ mkTable (const get)
   put = traverse_ put
 
-deriving instance KnownNat (Cardinality a) => Applicative (Table a)
+instance Finite a => Applicative (Table a) where
+  pure = tabulate . const
+  liftA2 f x y = tabulate (liftA2 f (index x) (index y))
+  f <*> x = tabulate (index f <*> index x)
 
-instance (KnownNat (Cardinality a), Default b) => Default (Table a b) where
-  def = Table (pure def)
+instance (Finite a, Default b) => Default (Table a b) where
+  def = pure def
 
 -- | 'Data.Profunctor.lmap' for a constrained 'Data.Profunctor.Profunctor'.
 lmapTable :: (Finite b, Finite c) => (b -> c) -> Table c a -> Table b a
@@ -361,13 +355,12 @@ instance Finite a => Traversable (Table a) where
 
 instance Finite a => Distributive (Table a) where
   collect f fa =
-    reifySInt (cardinality @a) $
     let fgb = f <$> fa
-    in  Table $ V.mkVec (\i -> flip index (fromFin i) <$> fgb)
+    in  Table $ VE.mkVec (cardinality @a) (\i -> flip index (fromFin i) <$> fgb)
 
 instance Finite a => Representable (Table a) where
   type Rep (Table a) = a
-  tabulate f = reifySInt (cardinality @a) $ Table $ V.mkVec (f . fromFin)
+  tabulate f = Table $ VE.mkVec (cardinality @a) (f . fromFin)
   index (Table vec) i = vec V.! toFin i
 
 instance Finite a => FunctorWithIndex a (Table a) where imap = imapRep
@@ -395,8 +388,7 @@ traverseRep
   :: forall x a b f
    . (Finite x, Applicative f)
   => (a -> f b) -> (x -> a) -> f (x -> b)
-traverseRep f = reifySInt (cardinality @x) $
-  fmap index . traverse f . tabulate @(Table _)
+traverseRep f = fmap index . traverse f . tabulate @(Table _)
 
 -- | Memoize a function by using a 'Vec' as a lazy lookup table.
 --
@@ -419,7 +411,7 @@ retabulated = from tabulated . tabulated
 (!) = index
 
 -- | Lens on a single element.
-ix :: (KnownNat (Cardinality a), Finite a) => a -> Lens' (Table a b) b
+ix :: Finite a => a -> Lens' (Table a b) b
 ix a = a `seq` lens (! a) (\(Table vec) b -> Table (vec & V.ix (toFin a) .~ b))
 
 -- | Monomorphized 'tabulate'.  Can be useful for type ambiguity reasons.

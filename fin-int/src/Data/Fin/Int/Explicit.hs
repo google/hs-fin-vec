@@ -39,9 +39,10 @@ module Data.Fin.Int.Explicit
          , fin, finFromIntegral, knownFin, tryFin, finMod, finDivMod, finToInt
            -- * Bound Manipulation
          , embed, unembed, tryUnembed
-         , shiftFin, unshiftFin, splitFin
+         , shiftFin, unshiftFin, tryUnshiftFin, splitFin
          , weaken, strengthen
          -- * Enumeration
+         , minFin, maxFin
          , enumFin, enumFinDown, enumDownFrom, enumDownTo, enumDownFromTo
            -- * Arithmetic
            -- ** In 'Maybe'
@@ -281,11 +282,17 @@ instance KnownNat n => Enum (Fin n) where
     {-# INLINE enumFromTo #-}
     {-# INLINE enumFromThenTo #-}
 
--- XXX This should have context 1<=n, but that stops deriving from
--- working for types containing a Fin.
+-- | The minimal value of the given inhabited 'Fin' type (i.e. @0@).
+minFin :: 1 <= n => Fin n
+minFin = Fin 0
+
+-- | The maximal value of the given inhabited 'Fin' type (i.e @n - 1@).
+maxFin :: 1 <= n => SInt n -> Fin n
+maxFin sn = Fin (unSInt sn - 1)
+
 instance FinSize n => Bounded (Fin n) where
-    minBound = fin sintVal 0
-    maxBound = let sn = sintVal in fin sn (unSInt sn - 1)
+    minBound = minFin
+    maxBound = maxFin sintVal
     {-# INLINE minBound #-}
     {-# INLINE maxBound #-}
 
@@ -472,12 +479,16 @@ weaken (Fin x) = Fin x
 strengthen :: SInt n -> Fin (n+1) -> Maybe (Fin n)
 strengthen sn (Fin x) = if x == unSInt sn then Nothing else Just (Fin x)
 
--- | 'shiftFin' increases the value and bound of a Fin argument both by @m@.
+-- | 'shiftFin' increases the value and bound of a Fin both by @m@.
 shiftFin :: SInt m -> Fin n -> Fin (m+n)
 shiftFin sm (Fin x) = Fin (unSInt sm + x)
 
--- | 'unshiftFin' decreases the value and bound of a Fin argument both by @m@.
-unshiftFin :: SInt m -> SInt n -> Fin (m+n) -> Fin n
+-- | 'tryUnshiftFin' decreases the value and bound of a Fin both by @m@.
+tryUnshiftFin :: SInt m -> SInt n -> Fin (m+n) -> Maybe (Fin n)
+tryUnshiftFin sm sn (Fin x) = tryFin sn (x - unSInt sm)
+
+-- | 'unshiftFin' decreases the value and bound of a Fin both by @m@.
+unshiftFin :: HasCallStack => SInt m -> SInt n -> Fin (m+n) -> Fin n
 unshiftFin sm sn (Fin x) = fin sn (x - unSInt sm)
 
 -- | Deconstructs the given Fin into one of two cases depending where it lies
@@ -508,5 +519,5 @@ tryUnembed sn (Fin i) = tryFin sn i
 --
 -- > crossFin @_ @n (x+1) y = n + crossFin @_ @n x y
 -- > crossFin @_ @n x (y+1) = 1 + crossFin @_ @n x y
-crossFin :: SInt n -> SInt (m * n) -> Fin m -> Fin n -> Fin (m * n)
-crossFin sn smn (Fin x) (Fin y) = fin smn (x * unSInt sn + y)
+crossFin :: SInt n -> Fin m -> Fin n -> Fin (m * n)
+crossFin sn (Fin x) (Fin y) = Fin (x * unSInt sn + y)
