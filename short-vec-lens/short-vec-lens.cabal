@@ -4,12 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 05a61752f3e6eb5e56f1120612e4f4dc1127b7c85c2f4022db29aa43d4cd7da5
+-- hash: a380c2552ac4d82ca6fcee0f4be9e2fd05dd6bf641c63e17fd4424af321992af
 
 name:           short-vec-lens
 version:        0.1.0.0
 synopsis:       Lenses and related functionality for the `short-vec` package.
-description:    Lenses and related functionality for the `short-vec` package.
+description:    This provides various 'Lens'es, 'Iso's, etc. for 'Vec's, including slicing,
+                reshaping, transposition, concatenation, and more.
 category:       Data
 homepage:       https://github.com/google/hs-fin-vec#readme
 bug-reports:    https://github.com/google/hs-fin-vec/issues

@@ -16,7 +16,9 @@ name: short-vec-lens
 version: 0.1.0.0
 category: Data
 synopsis: Lenses and related functionality for the `short-vec` package.
-description: Lenses and related functionality for the `short-vec` package.
+description: |
+  This provides various 'Lens'es, 'Iso's, etc. for 'Vec's, including slicing,
+  reshaping, transposition, concatenation, and more.
 license: Apache-2.0
 author: >
   Lennart Augustsson <lennart@augustsson.net>,
