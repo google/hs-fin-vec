@@ -358,8 +358,8 @@ svSize (V# sa) = SI# (I# (sizeofSmallArray# sa))
 -- | Dynamically determine the (actual) size\/length of the vector,
 -- as a standard term-level 'Int'. If you'd rather obtain @n@ at the
 -- type-level, and\/or to prove that the returned value is indeed the
--- @n@ of the input, see 'svSize' and 'withSize' instead. If you'd rather
--- obtain @n@ statically, see 'vLength'.
+-- @n@ of the input, see 'svSize' and 'Data.Vec.Short.withSize' instead. If
+-- you'd rather obtain @n@ statically, see 'Data.Vec.Short.vLength'.
 vSize :: Vec n a -> Int
 vSize = unSInt . svSize
 {-# INLINE vSize #-}
@@ -609,13 +609,18 @@ mkVec' = tabulateVec'
 {-# INLINE tabulateVec' #-}
 {-# INLINE mkVec' #-}
 
+-- | Construct a vector by choosing an element of another vector for each index.
+--
+-- @
+--     backpermute n f v ! i === v ! f i
+-- @
+backpermute :: SInt m -> (Fin m -> Fin n) -> Vec n a -> Vec m a
 -- Take care: backpermute can reference the same index of the input vector
 -- multiple times, so if we subjected the input side to fusion, we'd
 -- potentially duplicate work.  It might make sense to make a variant of
 -- 'backpermute' that assumes either indices are not duplicated or the
 -- computation behind each value is cheap enough to duplicate, but we can't
 -- just blindly fuse things into all 'backpermute's.
-backpermute :: SInt m -> (Fin m -> Fin n) -> Vec n a -> Vec m a
 backpermute m f xs = materialize $ Accessor m $ \i -> fetch xs (f i)
 {-# INLINE backpermute #-}
 
@@ -1153,10 +1158,11 @@ drop_ m xs =
 
   #-}
 
--- TODO(b/109675695): may want other variants of this operational-function
--- with different types.
+-- | Split a vector into two shorter vectors at the given index.
 split
   :: forall m n a. SInt m -> Vec (m + n) a -> (Vec m a, Vec n a)
+-- TODO(b/109675695): may want other variants of this operational-function
+-- with different types.
 split m xs =
   let va = access xs
   in  (materialize (takeVA m va), materialize (dropVA m va))
@@ -1309,6 +1315,7 @@ vsortOn f xs = listVec (svSize xs). L.sortOn f . F.toList $ xs
 
 
 --------------------------------
+
 -- | Transpose a vector of vectors.
 vtranspose :: SInt m -> Vec n (Vec m a) -> Vec m (Vec n a)
 vtranspose sm xs =

@@ -52,6 +52,8 @@
 module Data.Finite
          ( -- * Finite Enumerations
            Finite(..), cardinality, enumerate, asFin
+           -- * Implementation Details
+         , SC, GFinite(..), GCardinality
          ) where
 
 import Data.Functor.Identity (Identity)
@@ -78,8 +80,9 @@ import Data.Wrapped (Wrapped(..))
 
 -- | A typeclass of finite enumerable types.
 --
--- These allow constructing 'Representable' Functors using a simple 'Vec' as
--- the underlying storage, with constant-time lookup and efficient traversals.
+-- These allow constructing 'Data.Functor.Rep.Representable' Functors using a
+-- simple 'Data.Vec.Short.Vec' as the underlying storage, with constant-time
+-- lookup and efficient traversals.
 --
 -- Note that since 'Fin' is (currently) represented by 'Int', any type with
 -- more values than 'Int' can't have an instance.  This means we can't have
@@ -225,6 +228,7 @@ instance (Generic a, GFinite (Rep a)) => Finite (Wrapped Generic a) where
   toFin = gtoFin . from . unWrapped
   fromFin = Wrapped . to . gfromFin
 
+-- | The derived cardinality of a generic representation type.
 type family GCardinality a where
   GCardinality V1         = 0
   GCardinality U1         = 1
@@ -233,6 +237,7 @@ type family GCardinality a where
   GCardinality (f :+: g)  = GCardinality f + GCardinality g
   GCardinality (f :*: g)  = GCardinality f * GCardinality g
 
+-- | The derived 'Finite' implementation of a generic representation type.
 class GFinite a where
   gcardinality :: SInt (GCardinality a)
   gtoFin :: a p -> Fin (GCardinality a)
@@ -277,7 +282,7 @@ instance (GFinite f, GFinite g) => GFinite (f :*: g) where
   {-# INLINE gtoFin #-}
   {-# INLINE gfromFin #-}
 
--- | An 'Iso' between @a@ and the corresponding 'Fin' type, as per 'Finite'.
+-- | An 'Control.Lens.Iso' between @a@ and the corresponding 'Fin' type.
 asFin :: Finite a => Iso' a (Fin (Cardinality a))
 asFin = iso toFin fromFin
 

@@ -68,6 +68,7 @@ import Data.Finite
 import qualified Control.Lens as L
 #endif
 
+-- | A compact array of @b@s indexed by @a@, according to @'Finite' a@.
 newtype Table a b = Table (Vec (Cardinality a) b)
   deriving (Eq, Ord, Show, Functor, Foldable, Generic)
 

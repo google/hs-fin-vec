@@ -12,12 +12,12 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- | An API for "Data.Vec.Short" with 'SInt's for all size parameters.
+-- | An API for "Data.Vec.Short" with 'Data.SInt.SInt's for all size parameters.
 
 module Data.Vec.Short.Explicit
          ( Vec
          -- * Core constructors\/generators
-         -- ** 'Fin'-based constructors
+         -- ** 'Data.Fin.Int.Fin'-based constructors
          , mkVec, mkVec'
          , backpermute
          -- ** List-based constructors

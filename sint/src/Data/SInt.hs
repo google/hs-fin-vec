@@ -59,6 +59,8 @@ module Data.SInt
          ( SInt(SI#, unSInt), trySIntVal, sintVal, reifySInt, withSInt
          , addSInt, subSInt, subSIntLE, subSIntL, mulSInt, divSIntL, divSIntR
          , staticSIntVal
+           -- * Internal
+         , IntMaxP1
          ) where
 
 import Data.Proxy (Proxy(..))
@@ -120,8 +122,8 @@ sintVal = case trySIntVal of
     "Nat " ++ show (natVal' @n proxy#) ++ " out of range for Int."
 {-# INLINE sintVal #-}
 
-type IntBits = WORD_SIZE_IN_BITS
-type IntMaxP1 = 2 ^ (IntBits - 1)
+-- | One more than the maximum representable 'Int' on the current platform.
+type IntMaxP1 = 2 ^ (WORD_SIZE_IN_BITS - 1)
 
 -- | Like 'sintVal', but with static proof that it's in-bounds.
 --

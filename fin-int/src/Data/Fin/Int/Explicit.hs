@@ -103,6 +103,7 @@ instance FinSize n => Arbitrary (Fin n) where
 
 instance NFData (Fin n) where rnf (Fin x) = rnf x
 
+-- | Construct a 'Fin' from an 'Int', with bounds checks.
 fin :: HasCallStack => SInt n -> Int -> Fin n
 fin (unSInt -> !n) i
   | i <  0 = error $ "Fin: number out of range " ++ show i ++ " < 0"

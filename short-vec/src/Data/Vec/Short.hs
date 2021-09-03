@@ -129,6 +129,7 @@ reshape :: KnownNat m => Vec (n * m) a -> Vec n (Vec m a)
 reshape = V.reshape sintVal
 {-# INLINE reshape #-}
 
+-- | Transpose a vector of vectors.
 vtranspose :: KnownNat m => Vec n (Vec m a) -> Vec m (Vec n a)
 vtranspose = V.vtranspose sintVal
 {-# INLINE vtranspose #-}

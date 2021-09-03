@@ -77,6 +77,7 @@ import Data.Fin.Int.Explicit
          )
 import qualified Data.Fin.Int.Explicit as E
 
+-- | Construct a 'Fin' from an 'Int', with bounds checks.
 {-# INLINE fin #-}
 fin :: forall n. (HasCallStack, KnownNat n) => Int -> Fin n
 fin = E.fin sintVal
