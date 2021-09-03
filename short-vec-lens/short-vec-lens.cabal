@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e0fcdc1b554e3267fc304c700de0a6c9dd1141027e5c8c7784b30f7cfe1cad46
+-- hash: 05a61752f3e6eb5e56f1120612e4f4dc1127b7c85c2f4022db29aa43d4cd7da5
 
 name:           short-vec-lens
 version:        0.1.0.0
@@ -18,6 +18,7 @@ author:         Lennart Augustsson <lennart@augustsson.net>, Wren Romano <wrengr
 maintainer:     Andrew Pritchard <awpr@google.com>
 copyright:      2018-2021 Google LLC
 license:        Apache-2.0
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md

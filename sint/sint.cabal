@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fa3f3771aa2a33113dccb260de9cc176d0136ebfb93e37383db5354413d72df5
+-- hash: ceb4a5946c62e4214f0149eb3292465831eb7758e6dd5435ab1fb3d771813708
 
 name:           sint
 version:        0.1.0.0
@@ -23,6 +23,7 @@ author:         Andrew Pritchard <awpr@google.com>
 maintainer:     Andrew Pritchard <awpr@google.com>
 copyright:      2021 Google LLC
 license:        Apache-2.0
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md

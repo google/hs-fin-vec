@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 18d27bcdaecf979ebea0e5833708940455f17e98798b36b539696f3157a9eaea
+-- hash: 846224cc1ea6987d33f8472ae781836cc87ccbf4e2cf71fda8e537b8ce9d56c0
 
 name:           finite-table
 version:        0.1.0.0
@@ -18,6 +18,7 @@ author:         Andrew Pritchard <awpr@google.com>
 maintainer:     Andrew Pritchard <awpr@google.com>
 copyright:      2017-2021 Google LLC
 license:        Apache-2.0
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md

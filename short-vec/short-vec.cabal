@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d1a5552b2436ad0a37eb7b00ccbe118f5cc967038681af0644781e374aee50fe
+-- hash: d250fd4c14d88f72bb1abb89d02d30c1f6f6cbcbab3b4edfb356e404089e770e
 
 name:           short-vec
 version:        0.1.0.0
@@ -21,6 +21,7 @@ author:         Lennart Augustsson <lennart@augustsson.net>, Wren Romano, Andrew
 maintainer:     Andrew Pritchard <awpr@google.com>
 copyright:      2018-2021 Google LLC
 license:        Apache-2.0
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md
