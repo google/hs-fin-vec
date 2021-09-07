@@ -34,8 +34,9 @@
 -- @data SNat n = KnownNat n => SNat@, so that constructing an incorrect 'SInt'
 -- would be equivalent to producing an incorrect 'KnownNat' instance.
 --
--- 'SInt's are constructed safely by 'sintVal', which converts with bounds
--- checks from a 'KnownNat' instance, or by various arithmetic functions.
+-- 'SInt's are constructed safely by 'staticSIntVal' with no overhead,
+-- by 'sintVal' with runtime bounds checks based on a 'KnownNat' instance, or
+-- by various arithmetic functions.
 
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
@@ -159,7 +160,7 @@ mulSInt (SI# m@(I# m')) (SI# n@(I# n')) =
   mn = m * n
   mnNat = fromIntegral m * fromIntegral n :: Natural
 
--- | Subtract two 'SInt's, using an inequality constraint to rule out overflow.
+-- | Subtract two 'SInt's with bounds checks; 'error' if the result is negative.
 subSInt :: HasCallStack => SInt m -> SInt n -> SInt (m - n)
 subSInt (SI# m) (SI# n)
   | n > m = error $ "Nat " ++ show (m - n) ++ " out of range."

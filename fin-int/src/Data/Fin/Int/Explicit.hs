@@ -28,9 +28,19 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 
--- | Finite natural numbers, with maximum value as part of the type.
+-- | Finite natural numbers, with upper bound as part of the type.
+--
 -- A value of type @'Fin' n@ ranges from @0@ to @n - 1@.
--- Operations that cause numbers to be out-of-range throw runtime errors.
+--
+-- Operations that can cause numbers to be out-of-range come with variants that
+-- throw runtime errors, return 'Maybe', or return results modulo the bound.
+--
+-- In contrast to "Data.Fin.Int", this module provides an API where runtime
+-- values of bound parameters are provided explicitly by 'SInt's, which can be
+-- more intuitive than passing implicitly via 'KnownNat', and can avoid some
+-- runtime 'Numeric.Natural.Natural'-to-'Int' conversions and bounds checks
+-- resulting from 'KnownNat', at the cost of making some code more tedious
+-- where the bounds "should" be obvious.
 
 module Data.Fin.Int.Explicit
          ( -- * Finite Natural Numbers

@@ -28,9 +28,22 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
--- | Finite natural numbers, with maximum value as part of the type.
+-- | Finite natural numbers, with upper bound as part of the type.
+--
 -- A value of type @'Fin' n@ ranges from @0@ to @n - 1@.
--- Operations that cause numbers to be out-of-range throw runtime errors.
+--
+-- Operations that can cause numbers to be out-of-range come with variants that
+-- throw runtime errors, return 'Maybe', or return results modulo the bound.
+--
+-- In contrast to "Data.Fin.Int.Explicit", this module provides an API that
+-- accepts the bounds values implicitly via 'KnownNat'.  This can be more
+-- convenient when there's no arithmetic involved in the bounds, but may cost
+-- more runtime 'Numeric.Natural.Natural'-to-'Int' conversions.
+--
+-- When type-level arithmetic is involved, the
+-- [ghc-typelits-knownnat](https://hackage.haskell.org/package/ghc-typelits-knownnat)
+-- plugin may be useful to derive 'KnownNat' instances for bounds automatically.
+
 module Data.Fin.Int
          ( -- * Finite Natural Numbers
            Fin, FinSize

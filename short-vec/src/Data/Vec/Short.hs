@@ -12,17 +12,28 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- | An implementation of short vectors.
---
--- The underlying implementation uses the 'GHC.Exts.SmallArray#' primitive,
--- which is best-suited for short vectors (less than a few hundred elements).
-
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
+
+-- | An implementation of short vectors.
+--
+-- The underlying implementation uses the 'GHC.Exts.SmallArray#' primitive,
+-- which is best-suited for short vectors (less than a few hundred elements).
+--
+-- In contrast to "Data.Vec.Short.Explicit", this module provides an API where
+-- bounds parameters are passed implicitly by 'KnownNat'.  This can be more
+-- convenient in cases where the bounds are obvious and type-level arithmetic
+-- is not involved, but it comes at the cost of some runtime
+-- 'Numeric.Natural.Natural'-to-'Int' conversions.
+--
+-- When type-level arithmetic is involved, the
+-- [ghc-typelits-knownnat](https://hackage.haskell.org/package/ghc-typelits-knownnat)
+-- plugin may be useful to derive 'KnownNat' instances for bounds automatically.
 
 module Data.Vec.Short
          ( Vec
@@ -83,9 +94,6 @@ import Data.Vec.Short.Internal hiding
          , iterate, iterate', fromList, viota, liftA2Lazy
          )
 import qualified Data.Vec.Short.Internal as V
-
--- This module exposes API shims using KnownNat to quarantine SInt inside of
--- the data_vec package (for now; we may export both APIs in the future).
 
 -- | Create a known-length vector using a pure function.
 --

@@ -48,6 +48,15 @@
 -- is also based on 'Int') and to make the type compatible with
 -- 'Data.Finite.Table.Table' (which would be impractically large for a key type
 -- with too many values to represent as 'Int').
+--
+-- The most common way to get a 'Finite' instance for a type is to tack on a
+-- @deriving Finite via 'Wrapped' 'Generic' MyType@ clause, which results in an
+-- automatically-generated instance based on the type's ADT structure.
+--
+-- This also provides instances @'Enum' (Wrapped Finite a)@ and
+-- @'Bounded' (Wrapped Finite a)@, so some types that would otherwise not be
+-- compatible with derived 'Enum' instances can get them by adding a
+-- @deriving (Enum, Bounded) via Wrapped Finite MyType@ clause.
 
 module Data.Finite
          ( -- * Finite Enumerations

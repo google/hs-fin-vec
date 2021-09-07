@@ -26,6 +26,29 @@
 {-# LANGUAGE TypeOperators #-}
 
 -- | Provides 'Vec'-backed tables indexed by 'Finite' types.
+--
+-- Combined with 'Data.Finite' and its Generics-based derivation, this can
+-- effectively provide an array-backed container indexed by finite type.  This
+-- is a low-syntactic-overhead way to create 'Representable' functors of any
+-- desired shape: just define the index type, tack on the requisite @deriving@
+-- clauses, and start using @'Table' MyType@.
+--
+-- @
+--     data PrimaryColor = R | G | B
+--       deriving Generic
+--       deriving (Finite, Portray) via Wrapped Generic PrimaryColor
+--
+--     newtype Color = Color { getComponents :: Table PrimaryColor Int8 }
+--
+--     magenta :: Color
+--     magenta = Color (Table $ Vec.fromList [255, 0, 255])
+--
+--     cyan :: Color
+--     cyan = Color $ tabulate (\\case { R -> 0; G -> 255; B -> 255 })
+--
+--     main = pp $ getComponents magenta
+--     -- "mkTable (\\case { R -> 255; G -> 0; B -> 255 })"
+-- @
 
 module Data.Finite.Table
          ( -- * Tables
@@ -76,7 +99,7 @@ newtype Table a b = Table (Vec (Cardinality a) b)
 --
 -- @
 --     λ> pp $ (tabulate (even . finToInt) :: Table (Fin 3) Bool )
---     mkTable (\case { 0 -> True; 1 -> False; 2 -> True })
+--     mkTable (\\case { 0 -> True; 1 -> False; 2 -> True })
 -- @
 instance (Finite a, Portray a, Portray b) => Portray (Table a b) where
   portray (Table xs) = Apply "mkTable" $ pure $ LambdaCase $

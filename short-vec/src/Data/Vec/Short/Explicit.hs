@@ -13,6 +13,14 @@
 -- limitations under the License.
 
 -- | An API for "Data.Vec.Short" with 'Data.SInt.SInt's for all size parameters.
+--
+-- In contrast to "Data.Vec.Short", this module provides an API where runtime
+-- values of bound parameters are provided explicitly by 'Data.SInt.SInt's,
+-- which can be more intuitive than passing implicitly via
+-- 'GHC.TypeLits.KnownNat', and can avoid some runtime
+-- 'Numeric.Natural.Natural'-to-'Int' conversions and bounds checks resulting
+-- from @KnownNat@, at the cost of making some code more tedious where the
+-- bounds "should" be obvious.
 
 module Data.Vec.Short.Explicit
          ( Vec
