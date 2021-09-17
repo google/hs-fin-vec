@@ -23,7 +23,7 @@ packages:
 
 extra-deps:
 - attenuation-0.1.0.0
-- portray-0.1.0.0
+- portray-0.1.1
 - portray-diff-0.1.0.0
 - portray-pretty-0.1.0.0
 - wrapped-0.1.0.0

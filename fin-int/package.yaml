@@ -35,7 +35,7 @@ dependencies:
   - base >= 4.12 && < 4.16
   - data-default-class >= 0.0 && < 0.2
   - deepseq >= 1.1 && < 1.5
-  - portray >= 0.1 && < 0.2
+  - portray >= 0.1 && < 0.3
   - portray-diff >= 0.1 && < 0.2
   - sint >= 0.1 && < 0.2
   - QuickCheck >= 2.5 && < 2.15

@@ -102,14 +102,14 @@ newtype Table a b = Table (Vec (Cardinality a) b)
 --     mkTable (\\case { 0 -> True; 1 -> False; 2 -> True })
 -- @
 instance (Finite a, Portray a, Portray b) => Portray (Table a b) where
-  portray (Table xs) = Apply "mkTable" $ pure $ LambdaCase $
+  portray (Table xs) = Apply (Name "mkTable") $ pure $ LambdaCase $
     zipWith (\a b -> (portray a, portray b)) (enumerate @a) (toList xs)
 
 instance (Finite a, Portray a, Diff b) => Diff (Table a b) where
   diff (Table xs) (Table ys) =
     if hasDiff
-      then Just $ Apply "mkTable" $ pure $ LambdaCase $
-             (if allDiff then id else (++ [("_", "_")])) $
+      then Just $ Apply (Name "mkTable") $ pure $ LambdaCase $
+             (if allDiff then id else (++ [(Opaque "_", Opaque "_")])) $
              catMaybes labeledDiffs
       else Nothing
    where

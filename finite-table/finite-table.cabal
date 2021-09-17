@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 846224cc1ea6987d33f8472ae781836cc87ccbf4e2cf71fda8e537b8ce9d56c0
+-- hash: fc06da362a02920aed6d8970731891497f28504ef1592353c91ca40c73a49d1f
 
 name:           finite-table
-version:        0.1.0.0
+version:        0.1.0.1
 synopsis:       Types isomorphic to Fin, and Tables indexed by them.
 description:    This provides a class `Finite` for types isomorphic to some `Fin n`, and
                 uses it to implement array-backed total maps (`Table`s) indexed by them.
@@ -46,7 +46,7 @@ library
     , fin-int >=0.1 && <0.2
     , indexed-traversable >=0.1 && <0.2
     , lens >=4.15 && <5.1
-    , portray >=0.1 && <0.2
+    , portray >=0.1.1 && <0.3
     , portray-diff >=0.1 && <0.2
     , short-vec >=0.1 && <0.2
     , short-vec-lens >=0.1 && <0.2
@@ -73,7 +73,7 @@ test-suite Finite-test
     , finite-table
     , indexed-traversable >=0.1 && <0.2
     , lens >=4.15 && <5.1
-    , portray >=0.1 && <0.2
+    , portray >=0.1.1 && <0.3
     , portray-diff >=0.1 && <0.2
     , short-vec >=0.1 && <0.2
     , short-vec-lens >=0.1 && <0.2

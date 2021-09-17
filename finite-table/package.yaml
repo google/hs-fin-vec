@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: finite-table
-version: 0.1.0.0
+version: 0.1.0.1
 category: Data
 synopsis: Types isomorphic to Fin, and Tables indexed by them.
 description: |
@@ -38,7 +38,7 @@ dependencies:
   - fin-int >= 0.1 && < 0.2
   - indexed-traversable >= 0.1 && < 0.2
   - lens >= 4.15 && < 5.1
-  - portray >= 0.1 && < 0.2
+  - portray >= 0.1.1 && < 0.3
   - portray-diff >= 0.1 && < 0.2
   - sint >= 0.1 && < 0.2
   - short-vec >= 0.1 && < 0.2
