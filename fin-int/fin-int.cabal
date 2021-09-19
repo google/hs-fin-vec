@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c3a7fab11d3b18ccdaeb200947ed972269426b23bcff26387ff5e931b6ebc5c7
+-- hash: 902d6a92c4f32b4611214db271dd18fd7dc7d5d7c42aca4348b42d164f1204bd
 
 name:           fin-int
 version:        0.1.0.0
@@ -40,11 +40,11 @@ library
       src
   build-depends:
       QuickCheck >=2.5 && <2.15
-    , attenuation >=0.1 && <0.2
+    , attenuation ==0.1.*
     , base >=4.12 && <4.16
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5
     , portray >=0.1 && <0.3
-    , portray-diff >=0.1 && <0.2
-    , sint >=0.1 && <0.2
+    , portray-diff ==0.1.*
+    , sint ==0.1.*
   default-language: Haskell2010
