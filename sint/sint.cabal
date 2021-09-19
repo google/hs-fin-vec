@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 91dfad8e92e5c135151e6b92723dfde5f8cc9e94edb7c5f15956abd675454240
+-- hash: 177fa934dae71dd654c2f94755082052c9a5ef43b1f13eabcae33856ec6c64e2
 
 name:           sint
 version:        0.1.0.0
@@ -36,8 +36,6 @@ source-repository head
 library
   exposed-modules:
       Data.SInt
-  other-modules:
-      Paths_sint
   hs-source-dirs:
       src
   build-depends:
@@ -49,8 +47,6 @@ library
 test-suite SInt-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
-  other-modules:
-      Paths_sint
   hs-source-dirs:
       test
   build-depends:

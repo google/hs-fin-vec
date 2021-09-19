@@ -24,7 +24,7 @@ description: |
 license: Apache-2.0
 author: >
   Lennart Augustsson <lennart@augustsson.net>,
-  Wren Romano,
+  Wren Romano <wrengr@google.com>,
   Andrew Pritchard <awpr@google.com>
 copyright: 2018-2021 Google LLC
 maintainer: Andrew Pritchard <awpr@google.com>
@@ -56,6 +56,10 @@ library:
     - Data.Vec.Short.Explicit
     - Data.Vec.Short.Internal
 
+  when:
+    condition: false
+    other-modules: Paths_short_vec
+
 tests:
   Vec-test:
     source-dirs: test
@@ -70,6 +74,10 @@ tests:
       - test-framework-quickcheck2
       - test-framework-hunit
 
+    when:
+      condition: false
+      other-modules: Paths_short_vec
+
 benchmarks:
   Vec-benchmark:
     source-dirs: test
@@ -80,3 +88,7 @@ benchmarks:
       - fin-int
       - gauge
       - deepseq
+
+    when:
+      condition: false
+      other-modules: Paths_short_vec

@@ -51,6 +51,10 @@ library:
     - Data.Finite
     - Data.Finite.Table
 
+  when:
+    condition: false
+    other-modules: Paths_finite_table
+
 tests:
   Finite-test:
     source-dirs: test
@@ -60,3 +64,7 @@ tests:
       - test-framework-quickcheck2
       - finite-table
       - QuickCheck
+
+    when:
+      condition: false
+      other-modules: Paths_finite_table

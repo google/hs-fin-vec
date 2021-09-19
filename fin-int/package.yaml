@@ -45,3 +45,7 @@ library:
   exposed-modules:
     - Data.Fin.Int
     - Data.Fin.Int.Explicit
+
+  when:
+    condition: false
+    other-modules: Paths_fin_int

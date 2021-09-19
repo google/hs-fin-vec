@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a9b27a733a3d8f455d42a42e5f331bb54373a5dfad6377c37e6e28e2bf61d358
+-- hash: 9066cf5c29244228a52a60353a3fc8082c6d94ca9da12f0e2069921ba681b02f
 
 name:           short-vec
 version:        0.1.0.0
@@ -16,7 +16,7 @@ description:    This provides performant length-indexed vectors with a suite of 
 category:       Data
 homepage:       https://github.com/google/hs-fin-vec#readme
 bug-reports:    https://github.com/google/hs-fin-vec/issues
-author:         Lennart Augustsson <lennart@augustsson.net>, Wren Romano, Andrew Pritchard <awpr@google.com>
+author:         Lennart Augustsson <lennart@augustsson.net>, Wren Romano <wrengr@google.com>, Andrew Pritchard <awpr@google.com>
 
 maintainer:     Andrew Pritchard <awpr@google.com>
 copyright:      2018-2021 Google LLC
@@ -36,8 +36,6 @@ library
       Data.Vec.Short
       Data.Vec.Short.Explicit
       Data.Vec.Short.Internal
-  other-modules:
-      Paths_short_vec
   hs-source-dirs:
       src
   build-depends:

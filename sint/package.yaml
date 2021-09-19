@@ -43,6 +43,10 @@ library:
   exposed-modules:
     - Data.SInt
 
+  when:
+    condition: false
+    other-modules: Paths_sint
+
 tests:
   SInt-test:
     source-dirs: test
@@ -52,3 +56,7 @@ tests:
       - test-framework
       - test-framework-quickcheck2
       - QuickCheck
+
+    when:
+      condition: false
+      other-modules: Paths_sint

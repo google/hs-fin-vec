@@ -44,3 +44,7 @@ library:
   source-dirs: src
   exposed-modules:
     - Data.Vec.Short.Lens
+
+  when:
+    condition: false
+    other-modules: Paths_short_vec_lens

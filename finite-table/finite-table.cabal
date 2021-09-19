@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0bfa62f749da62ba5e39f4c74c308b0ebef1d021f6b5ec9b57fb198a3857eed6
+-- hash: 46d7c579d973f5cf78b794e4e3ffe5e4bb63cf18ea24dc62065702b063f54bd3
 
 name:           finite-table
 version:        0.1.0.1
@@ -32,8 +32,6 @@ library
   exposed-modules:
       Data.Finite
       Data.Finite.Table
-  other-modules:
-      Paths_finite_table
   hs-source-dirs:
       src
   build-depends:
@@ -57,8 +55,6 @@ library
 test-suite Finite-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
-  other-modules:
-      Paths_finite_table
   hs-source-dirs:
       test
   build-depends:
