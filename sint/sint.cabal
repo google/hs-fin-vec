@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4a20d496956cedef6f67237231bbc87d08f7216fd895c5ad4a614471d589ffe0
+-- hash: 91dfad8e92e5c135151e6b92723dfde5f8cc9e94edb7c5f15956abd675454240
 
 name:           sint
 version:        0.1.0.0
@@ -43,7 +43,7 @@ library
   build-depends:
       base >=4.12 && <4.16
     , portray >=0.1 && <0.3
-    , portray-diff >=0.1 && <0.2
+    , portray-diff ==0.1.*
   default-language: Haskell2010
 
 test-suite SInt-test
@@ -57,7 +57,7 @@ test-suite SInt-test
       QuickCheck
     , base >=4.12 && <4.16
     , portray >=0.1 && <0.3
-    , portray-diff >=0.1 && <0.2
+    , portray-diff ==0.1.*
     , sint
     , test-framework
     , test-framework-quickcheck2
