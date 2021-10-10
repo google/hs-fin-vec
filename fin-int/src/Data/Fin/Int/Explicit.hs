@@ -24,6 +24,7 @@
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -72,10 +73,10 @@ module Data.Fin.Int.Explicit
          , unsafeFin, unsafePred, unsafeSucc, unsafeCoFin, unsafeCoInt
          ) where
 
-import Control.Arrow (first)
 import Control.DeepSeq (NFData(rnf))
 import Data.Coerce (coerce)
 import Data.Data (Data)
+import Data.Maybe (mapMaybe)
 import Data.Type.Coercion (Coercion(..))
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import GHC.TypeNats
@@ -112,7 +113,9 @@ type role Fin nominal
 type FinSize n = (KnownNat n, 1 <= n)
 
 instance KnownNat n => Read (Fin n) where
-  readsPrec p s = first (finFromIntegral sintVal) <$> readsPrec @Integer p s
+  readsPrec p s =
+    mapMaybe (\ (x, s') -> (,s') <$> tryFin sintVal x) $
+    readsPrec @Integer p s
 
 instance FinSize n => Arbitrary (Fin n) where
   arbitrary = arbitraryBoundedEnum
