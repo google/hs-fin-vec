@@ -34,7 +34,7 @@ extra-source-files:
 
 dependencies:
   - base >= 4.12 && < 4.16
-  - fin-int >= 0.1 && < 0.2
+  - fin-int >= 0.1 && < 0.3
   - lens >= 4.15 && < 5.1
   - short-vec >= 0.1 && < 0.2
   - sint >= 0.1 && < 0.2

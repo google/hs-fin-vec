@@ -42,7 +42,7 @@ dependencies:
   - distributive >= 0.1 && < 0.7
   - integer-gmp >= 0.5 && < 1.2
   - indexed-traversable >= 0.1 && < 0.2
-  - fin-int >= 0.1 && < 0.2
+  - fin-int >= 0.1 && < 0.3
   - portray >= 0.1 && < 0.3
   - portray-diff >= 0.1 && < 0.2
   - semigroupoids >= 1.0 && < 5.4

@@ -4,14 +4,14 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f810a8299931367bd550fb6b775953d32e62785a7b3be83d83bb24f389f901dd
+-- hash: 062cb12b0e4b355b6c8a5e6deaa5259a9a877078ac81be606785461ba5edcc09
 
 name:           fin-int
-version:        0.1.0.0
+version:        0.2.0
 synopsis:       The type of finite sets with elements identified by the ordinals.
-description:    This provides a newtype Fin containing an Int with an invariant that its
-                value is less than its type-level Nat bound.  It aims to have low overhead
-                compared to Ints, and is suitable for use as the index type of
+description:    This provides a newtype @Fin@ containing an @Int@ with an invariant that
+                its value is less than its type-level @Nat@ bound.  It aims to have low
+                overhead compared to @Int@s, and is suitable for use as the index type of
                 length-indexed vectors.
 category:       Data
 homepage:       https://github.com/google/hs-fin-vec#readme

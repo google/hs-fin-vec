@@ -22,6 +22,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -101,6 +102,11 @@ newtype Fin (n :: Nat) = Fin FinRep
   deriving (Eq, Ord, Data)
   -- Fin Read/Show behave like other numeric newtypes: drop the \"Fin\".
   deriving newtype (Show, Portray, Diff)
+
+-- Prevent 'Coercible' across 'Fin's of different bounds.
+--
+-- For the safe direction, we have 'Attenuable' instead.
+type role Fin nominal
 
 -- | Constraint synonym for naturals @n@ s.t. @'Fin' n@ is inhabited.
 type FinSize n = (KnownNat n, 1 <= n)

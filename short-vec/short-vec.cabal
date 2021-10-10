@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9066cf5c29244228a52a60353a3fc8082c6d94ca9da12f0e2069921ba681b02f
+-- hash: 0dbabd9f56f979642a1ed86a7f9cac10c9c0ae03ac0c06e05aebd1ac95d56905
 
 name:           short-vec
 version:        0.1.0.0
@@ -45,7 +45,7 @@ library
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5
     , distributive >=0.1 && <0.7
-    , fin-int ==0.1.*
+    , fin-int >=0.1 && <0.3
     , indexed-traversable ==0.1.*
     , integer-gmp >=0.5 && <1.2
     , portray >=0.1 && <0.3
@@ -67,7 +67,7 @@ test-suite Vec-test
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5
     , distributive >=0.1 && <0.7
-    , fin-int ==0.1.*
+    , fin-int >=0.1 && <0.3
     , indexed-traversable ==0.1.*
     , integer-gmp >=0.5 && <1.2
     , portray >=0.1 && <0.3
