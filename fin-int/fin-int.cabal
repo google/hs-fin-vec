@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 062cb12b0e4b355b6c8a5e6deaa5259a9a877078ac81be606785461ba5edcc09
 
 name:           fin-int
 version:        0.2.0
@@ -38,7 +36,7 @@ library
       src
   build-depends:
       QuickCheck >=2.5 && <2.15
-    , attenuation ==0.1.*
+    , attenuation >=0.1 && <0.3
     , base >=4.12 && <4.16
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5

@@ -21,6 +21,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE RoleAnnotations #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -87,7 +88,12 @@ import GHC.TypeNats
 import Data.Default.Class (Default(..))
 import Data.Portray (Portray)
 import Data.Portray.Diff (Diff)
-import Data.Type.Attenuation (Attenuation, coercible)
+import Data.Type.Attenuation
+         ( Attenuation, coercible
+#if MIN_VERSION_attenuation(0, 2, 0)
+         , Attenuable(..)
+#endif
+         )
 import Test.QuickCheck (Arbitrary(..), arbitraryBoundedEnum)
 
 import Data.SInt (SInt, unSInt, sintVal)
@@ -121,6 +127,11 @@ instance FinSize n => Arbitrary (Fin n) where
   arbitrary = arbitraryBoundedEnum
 
 instance NFData (Fin n) where rnf (Fin x) = rnf x
+
+#if MIN_VERSION_attenuation(0,2,0)
+instance Attenuable (Fin n) Int
+instance m <= n => Attenuable (Fin m) (Fin n)
+#endif
 
 -- | Construct a 'Fin' from an 'Int', with bounds checks.
 fin :: HasCallStack => SInt n -> Int -> Fin n
