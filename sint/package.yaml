@@ -31,7 +31,8 @@ maintainer: Andrew Pritchard <awpr@google.com>
 github: google/hs-fin-vec/sint
 
 extra-source-files:
-  CHANGELOG.md
+  - CHANGELOG.md
+  - README.md
 
 dependencies:
   - base >= 4.12 && < 4.16

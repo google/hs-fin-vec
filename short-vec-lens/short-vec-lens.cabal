@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 6a272d2fb73d9f3f857be36ca45bc06a86ec0de7dc3d48150beca3108cdacba5
 
 name:           short-vec-lens
 version:        0.1.0.0
@@ -23,6 +21,7 @@ license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md
+    README.md
 
 source-repository head
   type: git

@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 177fa934dae71dd654c2f94755082052c9a5ef43b1f13eabcae33856ec6c64e2
 
 name:           sint
 version:        0.1.0.0
@@ -27,6 +25,7 @@ license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     CHANGELOG.md
+    README.md
 
 source-repository head
   type: git

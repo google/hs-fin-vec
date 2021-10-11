@@ -32,7 +32,8 @@ github: google/hs-fin-vec/short-vec
 
 # Note: this causes CHANGELOG.md to be included in Hackage distributions.
 extra-source-files:
-  CHANGELOG.md
+  - CHANGELOG.md
+  - README.md
 
 dependencies:
   - adjunctions >= 4.4 && < 4.5
