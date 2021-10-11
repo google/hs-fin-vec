@@ -95,7 +95,7 @@ import qualified Data.Fin.Int.Explicit as E
 fin :: forall n. (HasCallStack, KnownNat n) => Int -> Fin n
 fin = E.fin sintVal
 
--- | This is similar to 'fromInteger', but you get a stack trace on error.
+-- | Generalized 'fin' that works on any 'Integral' type.
 {-# INLINE finFromIntegral #-}
 finFromIntegral
   :: forall n a
@@ -103,8 +103,7 @@ finFromIntegral
   => a -> Fin n
 finFromIntegral = E.finFromIntegral sintVal
 
--- | Like 'fin', but doesn't do any bounds checks. However, unlike
--- 'unsafeFin', this is safe (by virtue of the type constraints).
+-- | Construct a 'Fin' from a 'GHC.TypeNats.Nat' known to be in-bounds.
 knownFin :: forall i n. (KnownNat i, i <= n - 1) => Fin n
 knownFin = E.knownFin (sintVal @i)
 {-# INLINE knownFin #-}
@@ -272,6 +271,8 @@ shiftFin :: forall m n. KnownNat m => Fin n -> Fin (m+n)
 shiftFin = E.shiftFin sintVal
 
 -- | 'unshiftFin' decreases the value and bound of a Fin both by @m@.
+--
+-- Raises an exception if the result would be negative.
 unshiftFin
   :: forall m n
    . (HasCallStack, KnownNat m, KnownNat n)
@@ -294,13 +295,17 @@ splitFin = E.splitFin sintVal
 concatFin :: forall m n. KnownNat m => Either (Fin m) (Fin n) -> Fin (m + n)
 concatFin = E.concatFin sintVal
 
--- | Convert to a possibly smaller type.
--- This function fails if the number is too big.
+-- | Convert to a 'Fin' with a (potentially) smaller bound.
+--
+-- This function throws an exception if the number is out of range of the
+-- target type.
 {-# INLINE unembed #-}
 unembed :: (HasCallStack, KnownNat n) => Fin m -> Fin n
 unembed = E.unembed sintVal
 
--- | Convert to a possibly smaller type or return Nothing if out of bounds.
+-- | Convert to a 'Fin' with a (potentially) smaller bound.
+--
+-- Returns 'Nothing' if the number is out of range of the target type.
 {-# INLINE tryUnembed #-}
 tryUnembed :: KnownNat n => Fin m -> Maybe (Fin n)
 tryUnembed = E.tryUnembed sintVal

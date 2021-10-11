@@ -134,14 +134,15 @@ instance m <= n => Attenuable (Fin m) (Fin n)
 #endif
 
 -- | Construct a 'Fin' from an 'Int', with bounds checks.
+{-# INLINE fin #-}
 fin :: HasCallStack => SInt n -> Int -> Fin n
 fin (unSInt -> !n) i
   | i <  0 = error $ "Fin: number out of range " ++ show i ++ " < 0"
   | i >= n = error $ "Fin: number out of range " ++ show i ++ " >= " ++ show n
   | otherwise = Fin i
 
--- | This is similar to 'fromInteger', but you get a stack trace on error.
-{-# INLINE fin #-}
+-- | Generalized 'fin' that works on any 'Integral' type.
+{-# INLINE finFromIntegral #-}
 finFromIntegral
   :: (HasCallStack, Integral a, Show a)
   => SInt n -> a -> Fin n
@@ -211,7 +212,7 @@ complementFin :: SInt n -> Fin n -> Fin n
 -- raising the error inside of x, so an invalid Fin can never be returned.
 complementFin sn x = unsafeFin (unSInt sn - 1 - finToInt x)
 
--- | This is like 'fromIntegral', but without the annoying context.
+-- | Convert a 'Fin' to the underlying 'Int' representing it.
 finToInt :: Fin n -> Int
 finToInt (Fin i) = i
 {-# INLINE finToInt #-}
@@ -480,6 +481,8 @@ chkMul sn = withFrozenCallStack mkChk sn "chkMul" (mul_ sn)
 {-# INLINEABLE chkMul #-}
 
 -- | Restricted coercion to larger Fin types.
+--
+-- This is also available as an 'Attenuable' instance.
 attLT :: (n <= m) => Attenuation (Fin n) (Fin m)
 attLT = coercible
 
@@ -492,6 +495,8 @@ attMinus :: Attenuation (Fin (n - k)) (Fin n)
 attMinus = coercible
 
 -- | Restricted coercion to Int.
+--
+-- This is also available as an 'Attenuable' instance.
 attInt :: Attenuation (Fin n) Int
 attInt = coercible
 
@@ -520,6 +525,8 @@ tryUnshiftFin :: SInt m -> SInt n -> Fin (m+n) -> Maybe (Fin n)
 tryUnshiftFin sm sn (Fin x) = tryFin sn (x - unSInt sm)
 
 -- | 'unshiftFin' decreases the value and bound of a Fin both by @m@.
+--
+-- Raises an exception if the result would be negative.
 unshiftFin :: HasCallStack => SInt m -> SInt n -> Fin (m+n) -> Fin n
 unshiftFin sm sn (Fin x) = fin sn (x - unSInt sm)
 
@@ -536,18 +543,24 @@ concatFin sm e = case e of
   Left (Fin x) -> Fin x
   Right x -> shiftFin sm x
 
--- | Convert to a bigger type.
+-- | Convert to a 'Fin' with a larger bound.
+--
+-- This is equivalent to a specialization of 'Data.Type.Attenuation.attenuate'.
 {-# INLINE embed #-}
 embed :: (m <= n) => Fin m -> Fin n
 embed (Fin i) = Fin i
 
--- | Convert to a possibly smaller type.
--- This function fails if the number is too big.
+-- | Convert to a 'Fin' with a (potentially) smaller bound.
+--
+-- This function throws an exception if the number is out of range of the
+-- target type.
 {-# INLINE unembed #-}
 unembed :: HasCallStack => SInt n -> Fin m -> Fin n
 unembed sn (Fin i) = ufin sn i
 
--- | Convert to a possibly smaller type or return Nothing if out of bounds.
+-- | Convert to a 'Fin' with a (potentially) smaller bound.
+--
+-- Returns 'Nothing' if the number is out of range of the target type.
 tryUnembed :: SInt n -> Fin m -> Maybe (Fin n)
 tryUnembed sn (Fin i) = tryFin sn i
 
