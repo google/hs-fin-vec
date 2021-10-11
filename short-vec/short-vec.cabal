@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           short-vec
 version:        0.1.0.0
-synopsis:       A length-indexed vector type build on 'SmallArray#'
+synopsis:       Length-indexed vectors using SmallArray#
 description:    This provides performant length-indexed vectors with a suite of rewrite rules
                 implementing fusion of intermediate structures, so that expressions involving
                 many operations can usually be compiled to a single pass of computing and

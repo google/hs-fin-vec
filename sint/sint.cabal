@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           sint
 version:        0.1.0.0
-synopsis:       A singleton type for `Nat` represented as `Int`.
+synopsis:       Nat singletons represented by Int
 description:    This package implements a type `SInt` that links a runtime `Int` with a
                 type-level `Nat`, along with some arithmetic and reflection capabilities.
                 .

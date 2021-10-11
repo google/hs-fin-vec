@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           fin-int
 version:        0.2.0
-synopsis:       The type of finite sets with elements identified by the ordinals.
+synopsis:       Finite sets of static size
 description:    This provides a newtype @Fin@ containing an @Int@ with an invariant that
                 its value is less than its type-level @Nat@ bound.  It aims to have low
                 overhead compared to @Int@s, and is suitable for use as the index type of

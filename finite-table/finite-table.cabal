@@ -6,9 +6,9 @@ cabal-version: 1.12
 
 name:           finite-table
 version:        0.1.0.1
-synopsis:       Types isomorphic to Fin, and Tables indexed by them.
-description:    This provides a class `Finite` for types isomorphic to some `Fin n`, and
-                uses it to implement array-backed total maps (`Table`s) indexed by them.
+synopsis:       Types isomorphic to Fin; Tables indexed by them
+description:    This provides a class @Finite@ for types isomorphic to some @Fin n@, and
+                uses it to implement array-backed total maps (@Table@s) indexed by them.
 category:       Data
 homepage:       https://github.com/google/hs-fin-vec#readme
 bug-reports:    https://github.com/google/hs-fin-vec/issues

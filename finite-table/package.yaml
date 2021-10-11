@@ -15,10 +15,10 @@
 name: finite-table
 version: 0.1.0.1
 category: Data
-synopsis: Types isomorphic to Fin, and Tables indexed by them.
+synopsis: Types isomorphic to Fin; Tables indexed by them
 description: |
-    This provides a class `Finite` for types isomorphic to some `Fin n`, and
-    uses it to implement array-backed total maps (`Table`s) indexed by them.
+    This provides a class @Finite@ for types isomorphic to some @Fin n@, and
+    uses it to implement array-backed total maps (@Table@s) indexed by them.
 license: Apache-2.0
 author: Andrew Pritchard <awpr@google.com>
 copyright: 2017-2021 Google LLC
