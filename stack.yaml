@@ -22,7 +22,7 @@ packages:
 - finite-table
 
 extra-deps:
-- attenuation-0.1.0.0
+- attenuation-0.2.0
 - portray-0.2.0
 - portray-diff-0.1.0.1
 - portray-pretty-0.1.0.2
