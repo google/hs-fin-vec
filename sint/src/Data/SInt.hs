@@ -57,7 +57,7 @@
 #include "MachDeps.h"
 
 module Data.SInt
-         ( SInt(SI#, unSInt), trySIntVal, sintVal, reifySInt, withSInt
+         ( SInt(SI#, SI, unSInt), trySIntVal, sintVal, reifySInt, withSInt
          , addSInt, subSInt, subSIntLE, subSIntL, mulSInt, divSIntL, divSIntR
          , staticSIntVal
            -- * Internal
@@ -96,8 +96,16 @@ type role SInt nominal
 -- construct 'SInt's, and treat this constructor equivalently to
 -- 'unsafeCoerce'.
 pattern SI# :: Int -> SInt n
-pattern SI# {unSInt} = MkSInt unSInt
+pattern SI# x = MkSInt x
 {-# COMPLETE SI# #-}
+
+-- | A unidirectional pattern for safely deconstructing 'SInt's.
+--
+-- This lets us export 'unSInt' as if it were a field selector, without making
+-- it legal to use in record updates (because this pattern is unidirectional).
+pattern SI :: Int -> SInt n
+pattern SI {unSInt} <- MkSInt unSInt
+{-# COMPLETE SI #-}
 
 -- | Use an 'Int' as an existentially-quantified 'SInt'.
 withSInt :: HasCallStack => Int -> (forall n. SInt n -> r) -> r
