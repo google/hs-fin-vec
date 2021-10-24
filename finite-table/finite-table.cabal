@@ -47,7 +47,7 @@ library
     , portray-diff ==0.1.*
     , short-vec ==0.1.*
     , short-vec-lens ==0.1.*
-    , sint ==0.1.*
+    , sint >=0.1 && <0.3
     , wrapped ==0.1.*
   default-language: Haskell2010
 
@@ -72,7 +72,7 @@ test-suite Finite-test
     , portray-diff ==0.1.*
     , short-vec ==0.1.*
     , short-vec-lens ==0.1.*
-    , sint ==0.1.*
+    , sint >=0.1 && <0.3
     , test-framework
     , test-framework-quickcheck2
     , wrapped ==0.1.*
