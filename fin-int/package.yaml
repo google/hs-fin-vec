@@ -33,7 +33,7 @@ extra-source-files:
 
 dependencies:
   - attenuation >= 0.1 && < 0.3
-  - base >= 4.12 && < 4.16
+  - base >= 4.12 && < 4.17
   - data-default-class >= 0.0 && < 0.2
   - deepseq >= 1.1 && < 1.5
   - portray >= 0.1 && < 0.3

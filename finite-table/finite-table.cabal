@@ -35,7 +35,7 @@ library
       src
   build-depends:
       adjunctions ==4.4.*
-    , base >=4.12 && <4.16
+    , base >=4.12 && <4.17
     , cereal ==0.5.*
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5
@@ -59,7 +59,7 @@ test-suite Finite-test
   build-depends:
       QuickCheck
     , adjunctions ==4.4.*
-    , base >=4.12 && <4.16
+    , base >=4.12 && <4.17
     , cereal ==0.5.*
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5

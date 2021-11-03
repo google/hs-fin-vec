@@ -34,7 +34,7 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.12 && <4.16
+      base >=4.12 && <4.17
     , fin-int >=0.1 && <0.3
     , indexed-traversable ==0.1.*
     , lens >=4.15 && <5.1

@@ -40,7 +40,7 @@ library
   build-depends:
       QuickCheck >=2.5 && <2.15
     , adjunctions ==4.4.*
-    , base >=4.12 && <4.16
+    , base >=4.12 && <4.17
     , data-default-class >=0.0 && <0.2
     , deepseq >=1.1 && <1.5
     , distributive >=0.1 && <0.7
@@ -87,7 +87,7 @@ benchmark Vec-benchmark
   build-depends:
       QuickCheck >=2.5 && <2.15
     , adjunctions ==4.4.*
-    , base >=4.12 && <4.16
+    , base >=4.12 && <4.17
     , data-default-class >=0.0 && <0.2
     , deepseq
     , distributive >=0.1 && <0.7
